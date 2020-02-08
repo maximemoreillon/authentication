@@ -109,6 +109,8 @@ app.post('/login', (req, res) => {
       res.status(403).send({
         logged_in: login_status(req),
         error: "Incorrect password",
+        password_hashed: secrets.password_hashed,
+        password: req.body.password,
       });
     }
   });
