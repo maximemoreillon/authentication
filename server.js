@@ -80,7 +80,10 @@ app.post('/login', (req, res) => {
 
   // Now check if the password is correct
   bcrypt.compare(req.body.password, secrets.password_hashed, (err, result) => {
-    if(err) return res.status(500).send("Error checking password")
+    if(err) return res.status(500).send({
+      logged_in: login_status(req),
+      error: "Error checking password",
+    })
     if(result) {
 
       // Setting session variable
@@ -88,7 +91,10 @@ app.post('/login', (req, res) => {
 
       // Generate JWT
       jwt.sign({ username: req.body.username }, secrets.jwt_secret, (err, token) => {
-        if(err) return res.status(500).send("Error generating token")
+        if(err) return res.status(500).send({
+          logged_in: login_status(req),
+          error: "Error generating token",
+        })
 
         // Send success acknowledgement
         res.send({
