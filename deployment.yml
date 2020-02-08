@@ -1,20 +1,20 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: authentication-manager-deployment
+  name: authentication-microservice-deployment
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: authentication-manager-deployment
+      app: authentication-microservice-deployment
   template:
     metadata:
       labels:
-        app: authentication-manager-deployment
+        app: authentication-microservice-deployment
     spec:
       containers:
-      - name: authentication-manager
-        image: moreillon/authentication-manager
+      - name: authentication-microservice
+        image: moreillon/authentication-microservice
         ports:
         - containerPort: 8088
 ---
@@ -22,12 +22,12 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    run: authentication-manager-service
-  name: authentication-manager-service
+    run: authentication-microservice-service
+  name: authentication-microservice-service
 spec:
   ports:
   - port: 8088
     nodePort: 30111
   selector:
-    app: authentication-manager-deployment
+    app: authentication-microservice-deployment
   type: LoadBalancer

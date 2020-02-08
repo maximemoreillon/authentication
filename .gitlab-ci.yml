@@ -3,8 +3,8 @@ stages:
   - deploy
 
 variables:
-  DOCKER_IMAGE: moreillon/authentication-manager
-  KUBERNETES_DEPLOYMENT: authentication-manager-deployment
+  DOCKER_IMAGE: moreillon/authentication-microservice
+  KUBERNETES_DEPLOYMENT: authentication-microservice-deployment
 
 
 containerization:
@@ -19,8 +19,7 @@ containerization:
 deployment:
   stage: deploy
   script:
-    - pwd
-  #  - kubectl apply -f deployment.yml
-  #  - kubectl rollout restart deployment/${KUBERNETES_DEPLOYMENT}
+    - kubectl apply -f deployment.yml
+    - kubectl rollout restart deployment/${KUBERNETES_DEPLOYMENT}
   environment:
     name: production
