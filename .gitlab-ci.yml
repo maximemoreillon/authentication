@@ -1,15 +1,21 @@
 stages:
-  - containerize
+  - containerization
   - deploy
 
 variables:
   DOCKER_IMAGE: moreillon/authentication-manager
   KUBERNETES_DEPLOYMENT: authentication-manager-deployment
 
+
 containerization:
-  stage: containerize
+  stage: containerization
   script:
-    - docker build -t ${DOCKER_IMAGE}
+    - echo ${SECRETS} > secrets.js
+    - cat secrets.js
+  #  - docker login -u ${DOCKER_USERNAME} -p ${DOCKER_PASSWORD}
+  #  - docker build -t ${DOCKER_IMAGE} .
+  #  - docker push ${DOCKER_IMAGE}
+  #  - docker image rm ${DOCKER_IMAGE}
 
 deployment:
   stage: deploy

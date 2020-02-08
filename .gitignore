@@ -1,3 +1,4 @@
 node_modules/
 credentials.js
 cookies_config.js
+secrets.js

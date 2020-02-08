@@ -11,7 +11,7 @@ const bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
 
 // custom modules
-const credentials = require('./credentials');
+const secrets = require('./secrets');
 
 const app_port = 8088;
 const saltRounds = 10;
@@ -49,7 +49,13 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(cookieSession(require('./cookies_config')));
+app.use(cookieSession({
+  name: 'session',
+  secret: secrets.session_secret,
+  maxAge: 253402300000000,
+  sameSite: false,
+  domain: secrets.cookies_domain
+}));
 
 app.post('/status', send_login_status);
 app.get('/status', send_login_status);
@@ -65,7 +71,7 @@ app.post('/login', (req, res) => {
   }
 
   // Check if username matches
-  if(req.body.username !== credentials.username){
+  if(req.body.username !== secrets.username){
     return res.status(403).send({
       logged_in: login_status(req),
       error: "Invalid username",
@@ -73,7 +79,7 @@ app.post('/login', (req, res) => {
   }
 
   // Now check if the password is correct
-  bcrypt.compare(req.body.password, credentials.password_hashed, (err, result) => {
+  bcrypt.compare(req.body.password, secrets.password_hashed, (err, result) => {
     if(err) return res.status(500).send("Error checking password")
     if(result) {
 
@@ -81,7 +87,7 @@ app.post('/login', (req, res) => {
       req.session.username = req.body.username;
 
       // Generate JWT
-      jwt.sign({ username: req.body.username }, credentials.jwt_secret, { algorithm: 'RS256' }, (err, token) => {
+      jwt.sign({ username: req.body.username }, secrets.jwt_secret, (err, token) => {
         if(err) return res.status(500).send("Error generating token")
 
         // Send success acknowledgement
