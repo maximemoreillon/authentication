@@ -16,7 +16,7 @@ spec:
       - name: authentication-microservice
         image: moreillon/authentication-microservice
         ports:
-        - containerPort: 8088
+        - containerPort: 7088
 ---
 apiVersion: v1
 kind: Service
@@ -26,7 +26,7 @@ metadata:
   name: authentication-microservice-service
 spec:
   ports:
-  - port: 8088
+  - port: 7088
     nodePort: 30111
   selector:
     app: authentication-microservice-deployment

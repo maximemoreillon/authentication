@@ -13,7 +13,7 @@ const jwt = require('jsonwebtoken');
 // custom modules
 const secrets = require('./secrets');
 
-const app_port = 8088;
+const app_port = 7088;
 const saltRounds = 10;
 
 
