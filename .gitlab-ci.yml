@@ -3,7 +3,7 @@ stages:
   - deploy
 
 variables:
-  DOCKER_IMAGE: moreillon/authentication-microservice
+  DOCKER_IMAGE: 192.168.1.2:5000/authentication-microservice
   KUBERNETES_DEPLOYMENT: authentication-microservice-deployment
 
 

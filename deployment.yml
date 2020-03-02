@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: authentication-microservice
-        image: moreillon/authentication-microservice
+        image: 192.168.1.2:5000/authentication-microservice
         ports:
         - containerPort: 7088
 ---
