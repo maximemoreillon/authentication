@@ -17,6 +17,7 @@
     "express": "^4.17.1",
     "express-session": "^1.17.0",
     "jsonwebtoken": "^8.5.1",
-    "mongodb": "^3.3.3"
+    "mongodb": "^3.3.3",
+    "neo4j-driver": "^4.0.1"
   }
 }

@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: authentication-microservice
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: authentication-microservice
