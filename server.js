@@ -41,10 +41,7 @@ app.use(cors());
 app.post('/login', (req, res) => {
 
   // Check if all necessary login information is provided
-  if( !('username' in req.body && 'password' in req.body) ){
-    // 400: Bad request
-    return res.status(400).send('Missing username or password');
-  }
+  if( !('username' in req.body && 'password' in req.body) ) return res.status(400).send('Missing username or password');
 
   var session = driver.session()
   session
@@ -57,8 +54,10 @@ app.post('/login', (req, res) => {
   .then(result => {
     session.close()
 
-    if(result.records.length === 0) return res.status(400).send('Invalid username')
+    // If the user has not been found in the database
+    if(result.records.length === 0) return res.status(400).send('username not found in the database')
 
+    // if there is at least a match, take the first one (a bit dirty)
     let user_from_DB = result.records[0]._fields[result.records[0]._fieldLookup['user']]
 
     // Now check if the password is correct
@@ -83,6 +82,19 @@ app.post('/login', (req, res) => {
     res.status(500).send(`Error getting articles: ${error}`)
   })
 
+})
+
+app.post('/whoami', (req, res) => {
+
+  if(!req.headers.authorization) return res.status(403).send('JWT not present in authorization header')
+
+  // parse the headers to get the token
+  let token = req.headers.authorization.split(" ")[1];
+
+  jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
+    if(err) return res.status(403).send('Invalid JWT')
+    res.send({username: decoded.username})
+  });
 
 })
 
