@@ -38,8 +38,6 @@ app.post('/login', (req, res) => {
   // Check if all necessary login information is provided
   if( !('username' in req.body && 'password' in req.body) ) return res.status(400).send('Missing username or password')
 
-  console.log(`Login attempt from user identifying as ${req.body.username}`)
-
   const field_name = 'user'
   var session = driver.session()
   session
@@ -54,7 +52,6 @@ app.post('/login', (req, res) => {
 
     // If the user has not been found in the database
     if(result.records.length === 0) return res.status(400).send('User not found in the database')
-    else console.log(`Database match for user ${req.body.username}`)
 
     // if there is at least a match, take the first one (a bit dirty)
     let record = result.records[0]
@@ -62,37 +59,23 @@ app.post('/login', (req, res) => {
 
     // Check if user has a password
     if(!user.properties.password_hashed) return res.status(500).send('User does not have a password')
-    else console.log(`User ${req.body.username} has a password`)
 
     // Now check if the password is correct
     bcrypt.compare(req.body.password, user.properties.password_hashed, (err, result) => {
 
       // Handle hashing errors
-      if(err) {
-        console.log(`Error while verifying password for user ${user.properties.username}: ${err}`)
-        return res.status(500).send(`Error while verifying password for user ${user.properties.username}: ${err}`)
-      }
-      else console.log(`Password verification successful for user ${user.properties.username}`)
+      if(err) return res.status(500).send(`Error while verifying password for user ${user.properties.username}: ${err}`)
 
       // Check validity of result
-      if(!result) {
-        console.log(`Incorrect password for user ${user.properties.username}`)
-        return res.status(403).send(`Incorrect password for user ${user.properties.username}`)
-      }
-      else console.log(`Password for user ${user.properties.username} is correct`)
+      if(!result) return res.status(403).send(`Incorrect password for user ${user.properties.username}`)
 
       // Generate JWT
       jwt.sign({ username: user.properties.username }, secrets.jwt_secret, (err, token) => {
 
         // handle signing errors
-        if(err) {
-          console.log(`Error while generating token for user ${user.properties.username}: ${err}`)
-          return res.status(500).send(`Error while generating token for user ${user.properties.username}: ${err}`)
-        }
-        else console.log(`Successful signing of JWT for user ${user.properties.username}`)
+        if(err) return res.status(500).send(`Error while generating token for user ${user.properties.username}: ${err}`)
 
         // Respond with JWT
-        console.log(`Login procedure completed successfully for user ${user.properties.username}`)
         res.send({jwt: token});
 
       })
