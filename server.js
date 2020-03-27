@@ -82,11 +82,12 @@ app.post('/login', (req, res) => {
       else console.log(`Password for user ${user.properties.username} is correct`)
 
       // Generate JWT
-      jwt.sign({ username: user.properties.username }, secrets.jwt_secret, (error, token) => {
+      jwt.sign({ username: user.properties.username }, secrets.jwt_secret, (err, token) => {
 
-        if(error) {
-          console.log(`Error while generating token for user ${user.properties.username}: ${error}`)
-          return res.status(500).send(`Error while generating token for user ${user.properties.username}: ${error}`)
+        // handle signing errors
+        if(err) {
+          console.log(`Error while generating token for user ${user.properties.username}: ${err}`)
+          return res.status(500).send(`Error while generating token for user ${user.properties.username}: ${err}`)
         }
         else console.log(`Successful signing of JWT for user ${user.properties.username}`)
 
