@@ -26,12 +26,7 @@ const saltRounds = 10;
 // Express configuration
 const app = express();
 app.use(bodyParser.json());
-app.use(history({
-  // Ignore GET routes
-  rewrites: [
-    { from: '/status', to: '/status'},
-  ]
-}));
+app.use(history());
 
 // Serve the front end (single page application created in Vue)
 app.use(express.static(path.join(__dirname, 'dist')));
@@ -41,13 +36,16 @@ app.use(cors());
 app.post('/login', (req, res) => {
 
   // Check if all necessary login information is provided
-  if( !('username' in req.body && 'password' in req.body) ) return res.status(400).send('Missing username or password');
+  if( !('username' in req.body && 'password' in req.body) ) return res.status(400).send('Missing username or password')
 
+  console.log(`Login attempt from user identifying as ${req.body.username}`)
+
+  const field_name = 'user'
   var session = driver.session()
   session
   .run(`
-    MATCH (user:User {username: {username}})
-    RETURN user
+    MATCH (${field_name}:User {username: {username}})
+    RETURN ${field_name}
     `, {
       username: req.body.username,
     })
@@ -55,45 +53,88 @@ app.post('/login', (req, res) => {
     session.close()
 
     // If the user has not been found in the database
-    if(result.records.length === 0) return res.status(400).send('username not found in the database')
+    if(result.records.length === 0) return res.status(400).send('User not found in the database')
+    else console.log(`Database match for user ${req.body.username}`)
 
     // if there is at least a match, take the first one (a bit dirty)
-    let user_from_DB = result.records[0]._fields[result.records[0]._fieldLookup['user']]
+    let record = result.records[0]
+    let user = record.get(field_name)
+
+    // Check if user has a password
+    if(!user.properties.password_hashed) return res.status(500).send('User does not have a password')
+    else console.log(`User ${req.body.username} has a password`)
 
     // Now check if the password is correct
-    bcrypt.compare(req.body.password, user_from_DB.properties.password_hashed, (err, result) => {
-      if(err) return res.status(500).send('Error while verifying password')
-      if(result) {
+    bcrypt.compare(req.body.password, user.properties.password_hashed, (err, result) => {
 
-        // Generate JWT
-        jwt.sign({ username: req.body.username }, secrets.jwt_secret, (err, token) => {
-          if(err) return res.status(500).send('Error generating token')
-
-          // Respond with JWT
-          res.send({jwt: token});
-
-        });
+      // Handle hashing errors
+      if(err) {
+        console.log(`Error while verifying password for user ${user.properties.username}: ${err}`)
+        return res.status(500).send(`Error while verifying password for user ${user.properties.username}: ${err}`)
       }
-      else res.status(403).send('Incorrect password');
-    });
+      else console.log(`Password verification successful for user ${user.properties.username}`)
+
+      // Check validity of result
+      if(!result) {
+        console.log(`Incorrect password for user ${user.properties.username}`)
+        return res.status(403).send(`Incorrect password for user ${user.properties.username}`)
+      }
+      else console.log(`Password for user ${user.properties.username} is correct`)
+
+      // Generate JWT
+      jwt.sign({ username: user.properties.username }, secrets.jwt_secret, (error, token) => {
+
+        if(error) {
+          console.log(`Error while generating token for user ${user.properties.username}: ${error}`)
+          return res.status(500).send(`Error while generating token for user ${user.properties.username}: ${error}`)
+        }
+        else console.log(`Successful signing of JWT for user ${user.properties.username}`)
+
+        // Respond with JWT
+        console.log(`Login procedure completed successfully for user ${user.properties.username}`)
+        res.send({jwt: token});
+
+      })
+    })
 
   })
-  .catch(error => {
-    res.status(500).send(`Error getting articles: ${error}`)
-  })
+  .catch(error => { res.status(500).send(`Error while looking for user: ${error}`) })
 
 })
 
 app.post('/whoami', (req, res) => {
 
-  if(!req.headers.authorization) return res.status(403).send('JWT not present in authorization header')
+  if(!req.headers.authorization) return res.status(403).send('Authorization header not set')
 
   // parse the headers to get the token
   let token = req.headers.authorization.split(" ")[1];
 
   jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
     if(err) return res.status(403).send('Invalid JWT')
-    res.send({username: decoded.username})
+
+    const field_name = 'user'
+    var session = driver.session()
+    session
+    .run(`
+      MATCH (${field_name}:User {username: {username}})
+      RETURN ${field_name}
+      `, {
+        username: decoded.username,
+      })
+    .then(result => {
+      session.close()
+
+      // If the user has not been found in the database
+      if(result.records.length === 0) return res.status(400).send('User not found in the database')
+
+      // if there is at least a match, take the first one (a bit dirty)
+      let record = result.records[0]
+      let user = record.get(field_name)
+
+      res.send(user)
+
+    })
+    .catch(error => { res.status(500).send(`Error while looking for user: ${error}`) })
   });
 
 })
