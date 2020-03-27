@@ -92,6 +92,7 @@ app.post('/whoami', (req, res) => {
 
   // parse the headers to get the token
   let token = req.headers.authorization.split(" ")[1];
+  if(!token) return res.status(403).send('Token not found in authorization header')
 
   jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
     if(err) return res.status(403).send('Invalid JWT')
@@ -120,6 +121,45 @@ app.post('/whoami', (req, res) => {
     })
     .catch(error => { res.status(500).send(`Error while looking for user: ${error}`) })
   });
+
+})
+
+app.post('/password_update', (req, res) => {
+
+  // Currently only works to updare one's own password
+  // TODO: Allow admins to change password of anyone
+
+  if(!req.headers.authorization) return res.status(403).send('Authorization header not set')
+
+  // parse the headers to get the token
+  let token = req.headers.authorization.split(" ")[1];
+  if(!token) return res.status(403).send('Token not found in authorization header')
+
+  // Check if necessary information provided
+  if( !('new_password' in req.body) ) return res.status(400).send('Missing new password')
+
+  // Verify JWT
+  jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
+    if(err) return res.status(403).send('Invalid JWT')
+
+    // Encrypt new password
+    bcrypt.hash(req.body.new_password, 10, (err, hash) => {
+      if(err) return res.status(403).send(`Error hashing password ${err}`)
+
+      // Update DB
+      var session = driver.session()
+      session
+      .run(`
+        MATCH (${field_name}:User {username: {username}})
+        RETURN ${field_name}
+        `, {
+          username: decoded.username,
+        })
+      .then(result => {})
+      .catch(error => { res.status(500).send(`Error accessing DB: ${error}`) })
+
+    });
+  })
 
 })
 
