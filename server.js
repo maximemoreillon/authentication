@@ -23,6 +23,37 @@ const driver = neo4j.driver(
 const app_port = 7088;
 const saltRounds = 10;
 
+
+function verify_jwt_and_respond_with_user(token, res){
+  jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
+    if(err) return res.status(403).send('Invalid JWT')
+
+    const field_name = 'user'
+    var session = driver.session()
+    session
+    .run(`
+      MATCH (${field_name}:User {username: {username}})
+      RETURN ${field_name}
+      `, {
+        username: decoded.username,
+      })
+    .then(result => {
+      session.close()
+
+      // If the user has not been found in the database
+      if(result.records.length === 0) return res.status(400).send('User not found in the database')
+
+      // if there is at least a match, take the first one (a bit dirty)
+      let record = result.records[0]
+      let user = record.get(field_name)
+
+      res.send(user)
+
+    })
+    .catch(error => { res.status(500).send(`Error while looking for user: ${error}`) })
+  });
+}
+
 // Express configuration
 const app = express();
 app.use(bodyParser.json());
@@ -87,41 +118,22 @@ app.post('/login', (req, res) => {
 })
 
 app.post('/whoami', (req, res) => {
-
+  // Check if authorization header set
   if(!req.headers.authorization) return res.status(403).send('Authorization header not set')
-
   // parse the headers to get the token
   let token = req.headers.authorization.split(" ")[1];
   if(!token) return res.status(403).send('Token not found in authorization header')
 
-  jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
-    if(err) return res.status(403).send('Invalid JWT')
+  // Verify the token and respond
+  verify_jwt_and_respond_with_user(token, res)
+})
 
-    const field_name = 'user'
-    var session = driver.session()
-    session
-    .run(`
-      MATCH (${field_name}:User {username: {username}})
-      RETURN ${field_name}
-      `, {
-        username: decoded.username,
-      })
-    .then(result => {
-      session.close()
 
-      // If the user has not been found in the database
-      if(result.records.length === 0) return res.status(400).send('User not found in the database')
+app.post('/decode_jwt', (req, res) => {
+  if(! ('jwt' in req.body)) return res.status(400).send('JWT not present in body')
 
-      // if there is at least a match, take the first one (a bit dirty)
-      let record = result.records[0]
-      let user = record.get(field_name)
-
-      res.send(user)
-
-    })
-    .catch(error => { res.status(500).send(`Error while looking for user: ${error}`) })
-  });
-
+  // Verify the token and respond
+  verify_jwt_and_respond_with_user(req.body.jwt, res)
 })
 
 app.post('/password_update', (req, res) => {
