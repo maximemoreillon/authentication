@@ -67,7 +67,8 @@ app.use(cors());
 app.post('/login', (req, res) => {
 
   // Check if all necessary login information is provided
-  if( !('username' in req.body && 'password' in req.body) ) return res.status(400).send('Missing username or password')
+  if( !('username' in req.body) ) return res.status(400).send('Missing username')
+  if( !('password' in req.body) ) return res.status(400).send('Missing password')
 
   const field_name = 'user'
   var session = driver.session()
@@ -138,6 +139,7 @@ app.post('/decode_jwt', (req, res) => {
 
 app.post('/password_update', (req, res) => {
 
+  // COULD BE PUT IN USER MANAGER
   // Currently only works to updare one's own password
   // TODO: Allow admins to change password of anyone
 
