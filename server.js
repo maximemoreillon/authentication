@@ -32,10 +32,11 @@ function verify_jwt_and_respond_with_user(token, res){
     var session = driver.session()
     session
     .run(`
-      MATCH (${field_name}:User {username: {username}})
+      MATCH (${field_name}:User)
+      WHERE id(${field_name}) = toInt({user_id})
       RETURN ${field_name}
       `, {
-        username: decoded.username,
+        user_id: decoded.user_id,
       })
     .then(result => {
       session.close()
@@ -102,7 +103,7 @@ app.post('/login', (req, res) => {
       if(!result) return res.status(403).send(`Incorrect password for user ${user.properties.username}`)
 
       // Generate JWT
-      jwt.sign({ username: user.properties.username }, secrets.jwt_secret, (err, token) => {
+      jwt.sign({ user_id: user.identity.low }, secrets.jwt_secret, (err, token) => {
 
         // handle signing errors
         if(err) return res.status(500).send(`Error while generating token for user ${user.properties.username}: ${err}`)
