@@ -1,12 +1,7 @@
 // modules
-const process = require('process');
-const path = require('path');
-const http = require('http');
 const express = require('express');
-const cookieSession = require('cookie-session')
 const bodyParser = require('body-parser');
 const cors = require('cors')
-const history = require('connect-history-api-fallback');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const neo4j = require('neo4j-driver');
@@ -58,11 +53,6 @@ function verify_jwt_and_respond_with_user(token, res){
 // Express configuration
 const app = express();
 app.use(bodyParser.json());
-app.use(history());
-
-// Serve the front end (single page application created in Vue)
-app.use(express.static(path.join(__dirname, 'dist')));
-
 app.use(cors());
 
 app.post('/login', (req, res) => {
@@ -141,7 +131,7 @@ app.post('/decode_jwt', (req, res) => {
 app.post('/password_update', (req, res) => {
 
   // COULD BE PUT IN USER MANAGER
-  // Currently only works to updare one's own password
+  // Currently only works to update one's own password
   // TODO: Allow admins to change password of anyone
 
   if(!req.headers.authorization) return res.status(403).send('Authorization header not set')
@@ -181,5 +171,5 @@ app.post('/password_update', (req, res) => {
 
 // Start server
 app.listen(app_port, () => {
-  console.log(`Authentication manager listening on *:${app_port}`);
+  console.log(`Authentication microservice listening on *:${app_port}`);
 });
