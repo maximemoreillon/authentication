@@ -155,8 +155,8 @@ app.post('/password_update', (req, res) => {
       var session = driver.session()
       session
       .run(`
-        MATCH (${field_name}:User {username: {username}})
-        RETURN ${field_name}
+        MATCH (user:User {username: {username}})
+        RETURN user
         `, {
           username: decoded.username,
         })
