@@ -25,10 +25,10 @@ metadata:
     run: authentication-microservice
   name: authentication-microservice
 spec:
+  selector:
+    app: authentication-microservice
+  type: NodePort
   ports:
   - port: 7088
     targetPort: 7088
     nodePort: 30111
-  selector:
-    app: authentication-microservice
-  type: LoadBalancer
