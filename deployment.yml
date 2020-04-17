@@ -48,6 +48,6 @@ metadata:
  name: neo4j
 subsets:
  - addresses:
-     - ip: 10.1.27.1
+     - ip: 172.105.193.217 # Same IP as the Kubernetes endpoint
    ports:
      - port: 7687
