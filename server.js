@@ -55,6 +55,12 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+app.get('/', (req, res) => {
+  res.send(`
+    Authentication API, Maxime MOREILLON
+    `)
+})
+
 app.post('/login', (req, res) => {
 
   // Check if all necessary login information is provided
