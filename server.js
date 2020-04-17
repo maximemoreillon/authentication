@@ -5,8 +5,7 @@ const cors = require('cors')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const neo4j = require('neo4j-driver');
-const dotenv = require('dotenv');
-dotenv.config();
+
 
 // custom modules
 const secrets = require('./secrets');
@@ -18,8 +17,6 @@ const driver = neo4j.driver(
 
 const saltRounds = 10;
 
-var app_port = 80
-if(process.env.PORT) app_port = process.env.PORT
 
 function verify_jwt_and_respond_with_user(token, res){
   jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
@@ -178,6 +175,6 @@ app.post('/password_update', (req, res) => {
 
 
 // Start server
-app.listen(app_port, () => {
-  console.log(`Authentication microservice listening on *:${app_port}`);
+app.listen(process.env.PORT, () => {
+  console.log(`Authentication microservice listening on *:${process.env.PORT}`);
 });
