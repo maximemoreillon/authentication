@@ -5,6 +5,8 @@ const cors = require('cors')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const neo4j = require('neo4j-driver');
+const dotenv = require('dotenv');
+dotenv.config();
 
 // custom modules
 const secrets = require('./secrets');
@@ -14,10 +16,10 @@ const driver = neo4j.driver(
   neo4j.auth.basic(secrets.neo4j.username, secrets.neo4j.password)
 )
 
-// Config
-const app_port = 80;
 const saltRounds = 10;
 
+var app_port = 80
+if(process.env.PORT) app_port = process.env.PORT
 
 function verify_jwt_and_respond_with_user(token, res){
   jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
