@@ -28,4 +28,3 @@ spec:
   ports:
   - port: 7088
     targetPort: 7088
-    nodePort: 30111
