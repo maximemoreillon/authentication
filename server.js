@@ -17,6 +17,8 @@ const driver = neo4j.driver(
   )
 )
 
+var app_port = 80
+if(process.env.APP_PORT) app_port=process.env.APP_PORT
 const saltRounds = 10;
 
 
@@ -137,6 +139,6 @@ app.post('/decode_jwt', (req, res) => {
 
 
 // Start server
-app.listen(process.env.PORT, () => {
-  console.log(`Authentication microservice listening on *:${process.env.PORT}`);
+app.listen(app_port, () => {
+  console.log(`Authentication microservice listening on *:${app_port}`);
 });
