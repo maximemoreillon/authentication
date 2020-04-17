@@ -60,7 +60,8 @@ app.use(cors());
 
 app.get('/', (req, res) => {
   res.send(`
-    Authentication API, Maxime MOREILLON, Running on Linode
+    Authentication API, Maxime MOREILLON, Running on Linode <br>
+    Database url: ${process.env.NEO4J_URL}
     `)
 })
 
