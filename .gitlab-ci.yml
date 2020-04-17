@@ -22,3 +22,5 @@ deployment:
     - kubectl rollout restart deployment/${KUBERNETES_DEPLOYMENT}
   environment:
     name: production
+    kubernetes:
+      namespace: moreillon-applications
