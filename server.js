@@ -23,7 +23,7 @@ const saltRounds = 10;
 
 
 function verify_jwt_and_respond_with_user(token, res){
-  jwt.verify(token, process.env.JWT_SECCRET, (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if(err) return res.status(403).send('Invalid JWT')
 
     const field_name = 'user'
@@ -104,7 +104,7 @@ app.post('/login', (req, res) => {
       if(!result) return res.status(403).send(`Incorrect password for user ${user.properties.username}`)
 
       // Generate JWT
-      jwt.sign({ user_id: user.identity.low }, process.env.JWT_SECCRET, (err, token) => {
+      jwt.sign({ user_id: user.identity.low }, process.env.JWT_SECRET, (err, token) => {
 
         // handle signing errors
         if(err) return res.status(500).send(`Error while generating token for user ${user.properties.username}: ${err}`)
