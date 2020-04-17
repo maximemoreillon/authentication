@@ -21,8 +21,6 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  labels:
-    run: authentication-microservice
   name: authentication-microservice
 spec:
   ports:
