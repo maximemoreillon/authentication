@@ -5,21 +5,23 @@ const cors = require('cors')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const neo4j = require('neo4j-driver');
+const dotenv = require('dotenv');
 
-
-// custom modules
-const secrets = require('./secrets');
+dotenv.config();
 
 const driver = neo4j.driver(
-  secrets.neo4j.url,
-  neo4j.auth.basic(secrets.neo4j.username, secrets.neo4j.password)
+  process.env.NEO4J_URL,
+  neo4j.auth.basic(
+    process.env.NEO4J_USERNAME,
+    process.env.NEO4J_PASSWORD
+  )
 )
 
 const saltRounds = 10;
 
 
 function verify_jwt_and_respond_with_user(token, res){
-  jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
+  jwt.verify(token, process.env.JWT_SECCRET, (err, decoded) => {
     if(err) return res.status(403).send('Invalid JWT')
 
     const field_name = 'user'
@@ -98,7 +100,7 @@ app.post('/login', (req, res) => {
       if(!result) return res.status(403).send(`Incorrect password for user ${user.properties.username}`)
 
       // Generate JWT
-      jwt.sign({ user_id: user.identity.low }, secrets.jwt_secret, (err, token) => {
+      jwt.sign({ user_id: user.identity.low }, process.env.JWT_SECCRET, (err, token) => {
 
         // handle signing errors
         if(err) return res.status(500).send(`Error while generating token for user ${user.properties.username}: ${err}`)
@@ -131,46 +133,6 @@ app.post('/decode_jwt', (req, res) => {
 
   // Verify the token and respond
   verify_jwt_and_respond_with_user(req.body.jwt, res)
-})
-
-app.post('/password_update', (req, res) => {
-
-  // COULD BE PUT IN USER MANAGER
-  // Currently only works to update one's own password
-  // TODO: Allow admins to change password of anyone
-
-  if(!req.headers.authorization) return res.status(403).send('Authorization header not set')
-
-  // parse the headers to get the token
-  let token = req.headers.authorization.split(" ")[1];
-  if(!token) return res.status(403).send('Token not found in authorization header')
-
-  // Check if necessary information provided
-  if( !('new_password' in req.body) ) return res.status(400).send('Missing new password')
-
-  // Verify JWT
-  jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
-    if(err) return res.status(403).send('Invalid JWT')
-
-    // Encrypt new password
-    bcrypt.hash(req.body.new_password, 10, (err, hash) => {
-      if(err) return res.status(403).send(`Error hashing password ${err}`)
-
-      // Update DB
-      var session = driver.session()
-      session
-      .run(`
-        MATCH (user:User {username: {username}})
-        RETURN user
-        `, {
-          username: decoded.username,
-        })
-      .then(result => {})
-      .catch(error => { res.status(500).send(`Error accessing DB: ${error}`) })
-
-    });
-  })
-
 })
 
 
