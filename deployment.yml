@@ -48,6 +48,6 @@ metadata:
  name: neo4j
 subsets:
  - addresses:
-     - ip: 10.1.37.1
+     - ip: 10.1.27.1
    ports:
      - port: 7687
