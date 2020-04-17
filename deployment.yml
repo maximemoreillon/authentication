@@ -25,6 +25,10 @@ metadata:
   labels:
     run: authentication-microservice
 spec:
+  type: NodePort
+  selector:
+    app: authentication-microservice
   ports:
   - port: 7088
     targetPort: 7088
+    nodePort: 30111
