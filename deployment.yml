@@ -1,32 +1,33 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: authentication
+  name: authentication-microservice
 spec:
+  replicas: 1
   selector:
     matchLabels:
-      run: authentication
-  replicas: 1
+      app: authentication-microservice
   template:
     metadata:
       labels:
-        run: authentication
+        app: authentication-microservice
     spec:
       containers:
-      - name: authentication
+      - name: authentication-microservice
         image: 192.168.1.2:5000/authentication-microservice
         ports:
-        - containerPort: 7088
+        - containerPort: 80
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: authentication
   labels:
-    run: authentication
+    run: authentication-microservice
+  name: authentication-microservice
 spec:
   ports:
-  - port: 7088
-    protocol: TCP
+  - port: 80
+    nodePort: 30111
   selector:
-    run: authentication
+    app: authentication-microservice
+  type: NodePort

@@ -15,7 +15,7 @@ const driver = neo4j.driver(
 )
 
 // Config
-const app_port = 7088;
+const app_port = 80;
 const saltRounds = 10;
 
 

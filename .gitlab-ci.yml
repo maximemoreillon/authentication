@@ -3,8 +3,9 @@ stages:
   - deploy
 
 variables:
-  DOCKER_IMAGE: 192.168.1.2:5000/authentication-microservice
-  KUBERNETES_DEPLOYMENT: authentication-microservice
+  APPLICATION_NAME: authentication
+  CONTAINER_REGISTRY: 192.168.1.2:5000
+  DOCKER_IMAGE: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
 
 
 containerization:
@@ -19,7 +20,7 @@ deployment:
   stage: deploy
   script:
     - kubectl apply -f deployment.yml
-    - kubectl rollout restart deployment/${KUBERNETES_DEPLOYMENT}
+    - kubectl rollout restart deployment/${APPLICATION_NAME}
   environment:
     name: production
     kubernetes:
