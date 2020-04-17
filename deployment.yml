@@ -3,10 +3,10 @@ kind: Deployment
 metadata:
   name: authentication-microservice
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: authentication-microservice
+  replicas: 1
   template:
     metadata:
       labels:
@@ -23,10 +23,7 @@ kind: Service
 metadata:
   name: authentication-microservice
 spec:
-  type: NodePort
   selector:
     app: authentication-microservice
   ports:
   - port: 7088
-    targetPort: 7088
-    nodePort: 30111
