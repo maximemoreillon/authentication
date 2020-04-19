@@ -18,8 +18,6 @@ spec:
         ports:
         - containerPort: 80
 ---
-# Service to make application accessible from outside the cluster
-# This is now done using an Ingress
 apiVersion: v1
 kind: Service
 metadata:
