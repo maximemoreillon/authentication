@@ -31,24 +31,6 @@ spec:
   ports:
   - port: 80
 ---
-apiVersion: certmanager.k8s.io/v1alpha1
-kind: Certificate
-metadata:
-  name: ${APPLICATION_NAME} # The Certificate is named after the application
-spec:
-  secretName: ${APPLICATION_NAME}
-  issuerRef:
-    name: letsencrypt-prod # This issuer has been created manually
-    kind: ClusterIssuer
-  dnsNames:
-  - ${CERTIFICATE_DOMAIN}
-  acme:
-    config:
-    - http01:
-        ingress: ${APPLICATION_NAME} # Name of the ingress, named after the application
-      domains:
-      - ${CERTIFICATE_DOMAIN}
----
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:

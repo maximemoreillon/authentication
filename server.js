@@ -59,7 +59,10 @@ app.use(bodyParser.json());
 app.use(cors());
 
 app.get('/', (req, res) => {
-  res.send(`Authentication API, Maxime MOREILLON`)
+  res.send(`
+    Authentication API, Maxime MOREILLON<br>
+    ${process.env.NEO4J_URL}
+    `)
 })
 
 app.post('/login', (req, res) => {
