@@ -60,12 +60,12 @@ spec:
   tls:
   - hosts:
     - ${CERTIFICATE_DOMAIN}
-    secretName: ${CERTIFICATE_DOMAIN} # Name of the secret, i.e. the certificates
+    secretName: ${APPLICATION_NAME} # Name of the secret, i.e. the certificates
   rules:
   - host: ${CERTIFICATE_DOMAIN}
     http:
       paths:
       - path: /
         backend:
-          serviceName: ${CERTIFICATE_DOMAIN} # Name of the service, named after the app
+          serviceName: ${APPLICATION_NAME} # Name of the service, named after the app
           servicePort: 80
