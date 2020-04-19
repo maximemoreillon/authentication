@@ -36,7 +36,6 @@ function verify_jwt_and_respond_with_user(token, res){
         user_id: decoded.user_id,
       })
     .then(result => {
-      session.close()
 
       // If the user has not been found in the database
       if(result.records.length === 0) return res.status(400).send('User not found in the database')
@@ -49,6 +48,7 @@ function verify_jwt_and_respond_with_user(token, res){
 
     })
     .catch(error => { res.status(500).send(`Error while looking for user: ${error}`) })
+    .finally( () => session.close())
   });
 }
 
@@ -58,10 +58,7 @@ app.use(bodyParser.json());
 app.use(cors());
 
 app.get('/', (req, res) => {
-  res.send(`
-    Authentication API, Maxime MOREILLON<br>
-    ${process.env.NEO4J_URL}
-    `)
+  res.send(`Authentication API, Maxime MOREILLON`)
 })
 
 app.post('/login', (req, res) => {
@@ -80,7 +77,6 @@ app.post('/login', (req, res) => {
       username: req.body.username,
     })
   .then(result => {
-    session.close()
 
     // If the user has not been found in the database
     if(result.records.length === 0) return res.status(400).send('User not found in the database')
@@ -115,6 +111,7 @@ app.post('/login', (req, res) => {
 
   })
   .catch(error => { res.status(500).send(`Error while looking for user: ${error}`) })
+  .finally( () => session.close())
 
 })
 
