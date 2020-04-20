@@ -17,6 +17,8 @@ spec:
         image: ${CONTAINER_REGISTRY}/${APPLICATION_NAME}
         ports:
         - containerPort: 80
+      imagePullSecrets:
+      - name: registry-credentials
 ---
 apiVersion: v1
 kind: Service
