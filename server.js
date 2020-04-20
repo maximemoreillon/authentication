@@ -58,6 +58,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+// Express routes
 app.get('/', (req, res) => {
   res.send(`Authentication API, Maxime MOREILLON`)
 })
