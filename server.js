@@ -19,6 +19,7 @@ const driver = neo4j.driver(
 
 var app_port = 80
 if(process.env.APP_PORT) app_port=process.env.APP_PORT
+
 const saltRounds = 10;
 
 function verify_jwt_and_respond_with_user(token, res){
