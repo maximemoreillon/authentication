@@ -11,7 +11,7 @@ containerization:
   stage: containerization
   script:
     - cp ${ENV} ./.env
-    - echo "${CONTAINER_REGISTRY_PASSWORD}" | docker login --username ${CONTAINER_REGISTRY_USERNAME} --password-stdin
+    - echo "${CONTAINER_REGISTRY_PASSWORD}" | docker login https://${CONTAINER_REGISTRY} --username ${CONTAINER_REGISTRY_USERNAME} --password-stdin
     - docker build -t ${DOCKER_IMAGE} .
     - docker push ${DOCKER_IMAGE}
     - docker image rm ${DOCKER_IMAGE}
