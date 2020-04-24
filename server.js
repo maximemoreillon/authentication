@@ -27,6 +27,7 @@ function verify_jwt_and_respond_with_user(token, res){
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
     if(err) return res.status(403).send('Invalid JWT')
 
+    // Here, could think of getting user from user management microservice
     const field_name = 'user'
     var session = driver.session()
     session
@@ -70,11 +71,13 @@ app.post('/login', (req, res) => {
   if( !('username' in req.body) ) return res.status(400).send('Missing username')
   if( !('password' in req.body) ) return res.status(400).send('Missing password')
 
+  // Here, could think of getting user from user management microservice
   const field_name = 'user'
   var session = driver.session()
   session
   .run(`
-    MATCH (${field_name}:User {username: {username}})
+    MATCH (${field_name}:User)
+    WHERE user.username={username}
     RETURN ${field_name}
     `, {
       username: req.body.username,
@@ -133,8 +136,17 @@ app.post('/whoami', (req, res) => {
 app.post('/decode_jwt', (req, res) => {
   if(! ('jwt' in req.body)) return res.status(400).send('JWT not present in body')
 
+  // Todo: This should just return the content of the decoded JWT
+
   // Verify the token and respond
   verify_jwt_and_respond_with_user(req.body.jwt, res)
+})
+
+app.get('/user_from_jwt', (req, res) => {
+  if(! ('jwt' in req.query)) return res.status(400).send('JWT not present in query')
+
+  // Verify the token and respond
+  verify_jwt_and_respond_with_user(req.query.jwt, res)
 })
 
 
