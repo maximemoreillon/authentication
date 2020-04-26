@@ -121,7 +121,8 @@ app.post('/login', (req, res) => {
 
 })
 
-app.post('/whoami', (req, res) => {
+
+function whoami(req, res){
   // Check if authorization header set
   if(!req.headers.authorization) return res.status(403).send('Authorization header not set')
   // parse the headers to get the token
@@ -130,7 +131,10 @@ app.post('/whoami', (req, res) => {
 
   // Verify the token and respond
   verify_jwt_and_respond_with_user(token, res)
-})
+}
+
+app.post('/whoami', whoami)
+app.get('/whoami', whoami)
 
 
 app.post('/decode_jwt', (req, res) => {
