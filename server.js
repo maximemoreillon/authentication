@@ -56,9 +56,9 @@ function verify_jwt_and_respond_with_user(token, res){
 }
 
 // Express configuration
-const app = express();
-app.use(bodyParser.json());
-app.use(cors());
+const app = express()
+app.use(bodyParser.json())
+app.use(cors())
 
 // Express routes
 app.get('/', (req, res) => {
