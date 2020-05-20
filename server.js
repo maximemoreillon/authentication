@@ -7,6 +7,7 @@ const jwt = require('jsonwebtoken');
 const neo4j = require('neo4j-driver');
 const dotenv = require('dotenv');
 
+// Parse .env file
 dotenv.config();
 
 const driver = neo4j.driver(
@@ -21,7 +22,6 @@ var app_port = 80
 if(process.env.APP_PORT) app_port=process.env.APP_PORT
 
 const saltRounds = 10;
-
 
 function verify_jwt_and_respond_with_user(token, res){
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
@@ -123,6 +123,8 @@ app.post('/login', (req, res) => {
 
 
 function whoami(req, res){
+  // Retrieves user information based on JWT present in auth header
+
   // Check if authorization header set
   if(!req.headers.authorization) return res.status(403).send('Authorization header not set')
   // parse the headers to get the token
