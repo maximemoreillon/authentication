@@ -19,7 +19,7 @@ spec:
         ports:
         - containerPort: 80
       imagePullSecrets:
-      - name: registry-credentials
+      - name: registry-credentials # Used to log in the registry
 ---
 apiVersion: v1
 kind: Service
