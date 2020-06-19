@@ -33,8 +33,10 @@ app.get('/', (req, res) => {
 app.post('/login', (req, res) => {
 
   // Check if all necessary login information is provided
-  if( !('username' in req.body) ) return res.status(400).send('Missing username')
   if( !('password' in req.body) ) return res.status(400).send('Missing password')
+  if( !('username' in req.body)
+    && !('email_address' in req.body)
+    && !('identifier' in req.body)) return res.status(400).send('Missing username or e-mail address')
 
   // Here, could think of getting user from user management microservice
   const field_name = 'user'
@@ -42,10 +44,10 @@ app.post('/login', (req, res) => {
   session
   .run(`
     MATCH (${field_name}:User)
-    WHERE user.username={username}
+    WHERE user.username={identifier} OR user.email_address={identifier}
     RETURN ${field_name}
     `, {
-      username: req.body.username,
+      identifier: req.body.username || req.body.email_address || req.body.identifier,
     })
   .then(result => {
 
@@ -63,16 +65,16 @@ app.post('/login', (req, res) => {
     bcrypt.compare(req.body.password, user.properties.password_hashed, (err, result) => {
 
       // Handle hashing errors
-      if(err) return res.status(500).send(`Error while verifying password for user ${user.properties.username}: ${err}`)
+      if(err) return res.status(500).send(`Error while verifying password: ${err}`)
 
       // Check validity of result
-      if(!result) return res.status(403).send(`Incorrect password for user ${user.properties.username}`)
+      if(!result) return res.status(403).send(`Incorrect password`)
 
       // Generate JWT
       jwt.sign({ user_id: user.identity.low }, process.env.JWT_SECRET, (err, token) => {
 
         // handle signing errors
-        if(err) return res.status(500).send(`Error while generating token for user ${user.properties.username}: ${err}`)
+        if(err) return res.status(500).send(`Error while generating token: ${err}`)
 
         // Respond with JWT
         res.send({jwt: token});
