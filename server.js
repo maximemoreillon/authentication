@@ -10,6 +10,7 @@ const dotenv = require('dotenv')
 // Parse .env file
 dotenv.config()
 
+// Database configurattion
 const driver = neo4j.driver(
   process.env.NEO4J_URL,
   neo4j.auth.basic(
@@ -18,8 +19,8 @@ const driver = neo4j.driver(
   )
 )
 
-var app_port = 80
-if(process.env.APP_PORT) app_port=process.env.APP_PORT
+// Get app port from env varialbes if available, otherwise use 80
+const app_port = process.env.APP_PORT || 80
 
 const app = express()
 app.use(bodyParser.json())
@@ -44,19 +45,20 @@ app.post('/login', (req, res) => {
   session
   .run(`
     MATCH (${field_name}:User)
-    WHERE user.username={identifier} OR user.email_address={identifier}
+    WHERE ${field_name}.username={identifier}
+      OR ${field_name}.email_address={identifier}
     RETURN ${field_name}
     `, {
       identifier: req.body.username || req.body.email_address || req.body.identifier,
     })
   .then(result => {
 
-    // If the user has not been found in the database
+    // If no or too many users have been found
     if(result.records.length === 0) return res.status(400).send('User not found in the database')
+    if(result.records.length > 0) return res.status(400).send('Multiple users found in the database')
 
     // if there is at least a match, take the first one (a bit dirty)
-    let record = result.records[0]
-    let user = record.get(field_name)
+    let user = result.records[0].get(field_name)
 
     // Check if user has a password
     if(!user.properties.password_hashed) return res.status(500).send('User does not have a password')
@@ -127,8 +129,8 @@ function verify_jwt_and_respond_with_user(token, res){
       if(result.records.length === 0) return res.status(400).send('User not found in the database')
 
       // if there is at least a match, take the first one (a bit dirty)
-      let record = result.records[0]
-      let user = record.get(field_name)
+      let user = result.records[0].get(field_name)
+
 
       res.send(user)
 
