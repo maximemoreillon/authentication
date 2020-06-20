@@ -6,6 +6,8 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const neo4j = require('neo4j-driver')
 const dotenv = require('dotenv')
+const pjson = require('./package.json');
+
 
 // Parse .env file
 dotenv.config()
@@ -28,7 +30,7 @@ app.use(cors())
 
 // Express routes
 app.get('/', (req, res) => {
-  res.send(`Authentication API, Maxime MOREILLON`)
+  res.send(`Authentication API ${pjson.version}, Maxime MOREILLON`)
 })
 
 app.post('/login', (req, res) => {
