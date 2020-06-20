@@ -24,8 +24,8 @@ spec:
         - secretRef:
            name: environment-variables
       # Used to log in the registry
-      imagePullSecrets:
-      - name: registry-credentials
+      #imagePullSecrets:
+      #- name: registry-credentials
 ---
 apiVersion: v1
 kind: Service
