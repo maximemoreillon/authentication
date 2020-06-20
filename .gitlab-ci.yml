@@ -12,9 +12,7 @@ containerization:
   stage: containerization
   script:
     # Docker hub login
-    - echo ${DOCKER_HUB_USERNAME}
-    - echo ${DOCKER_HUB_PASSWORD}
-    - docker login -u ${DOCKER_HUB_USERNAME} -p ${DOCKER_HUB_PASSWORD}
+    - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
     # Build and push Docker image
     - docker build -t ${DOCKER_IMAGE} .
     - docker push ${DOCKER_IMAGE}
