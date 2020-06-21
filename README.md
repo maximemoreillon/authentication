@@ -2,7 +2,16 @@
 Authentication microservice that delivers a JWT upon receiving correct credentials.
 Here, users are stored in a Neo4J database.
 
-## Configuration
+## Routes
+
+| Route | Method | Body/query | Description |
+| --- | --- | --- | --- |
+| /login | POST | password and username or email_address | Allows users to login, responds with a JWT |
+| /whoami | GET/POST | - | Returns the user corresponding the the JWT provided in the authorization header |
+| /user_from_jwt | GET | jwt | Returns the user corresponding the the JWT provided in the query |
+
+
+## Environment variables
 The following environment variables must be provided to the container to function properly:
 
 | Variable | Description |
