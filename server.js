@@ -6,7 +6,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const neo4j = require('neo4j-driver')
 const dotenv = require('dotenv')
-const pjson = require('./package.json');
+const pjson = require('./package.json')
 
 
 // Parse .env file
@@ -57,7 +57,7 @@ app.post('/login', (req, res) => {
 
     // If no or too many users have been found
     if(result.records.length === 0) return res.status(400).send('User not found in the database')
-    if(result.records.length > 0) return res.status(400).send('Multiple users found in the database')
+    if(result.records.length > 1) return res.status(400).send('Multiple users found in the database')
 
     // if there is at least a match, take the first one (a bit dirty)
     let user = result.records[0].get(field_name)
