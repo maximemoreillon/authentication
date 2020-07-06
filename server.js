@@ -37,9 +37,13 @@ app.post('/login', (req, res) => {
 
   // Check if all necessary login information is provided
   if( !('password' in req.body) ) return res.status(400).send('Missing password')
-  if( !('username' in req.body)
-    && !('email_address' in req.body)
-    && !('identifier' in req.body)) return res.status(400).send('Missing username or e-mail address')
+
+
+  let identifier = req.body.email
+    || req.body.email_address
+    || req.body.username
+
+  if(!identifier) return res.status(401).send(`Missing username or email address`)
 
   // Here, could think of getting user from user management microservice
   const field_name = 'user'
@@ -51,7 +55,7 @@ app.post('/login', (req, res) => {
       OR ${field_name}.email_address={identifier}
     RETURN ${field_name}
     `, {
-      identifier: req.body.username || req.body.email_address || req.body.identifier,
+      identifier: identifier,
     })
   .then(result => {
 
