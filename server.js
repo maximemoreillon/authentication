@@ -42,6 +42,7 @@ app.post('/login', (req, res) => {
   let identifier = req.body.email
     || req.body.email_address
     || req.body.username
+    || req.body.identifier
 
   if(!identifier) return res.status(401).send(`Missing username or email address`)
 
