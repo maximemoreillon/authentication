@@ -150,6 +150,7 @@ exports.whoami = (req, res) => {
 }
 
 exports.get_user_from_jwt = (req, res) => {
+  console.log('Hello')
 
   let jwt = req.query.jwt
     || req.body.jwt
@@ -160,7 +161,7 @@ exports.get_user_from_jwt = (req, res) => {
   }
 
   // Verify the token and respond
-  verify_jwt_and_respond_with_user(req.query.jwt, res)
+  verify_jwt_and_respond_with_user(jwt, res)
 }
 
 

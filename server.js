@@ -37,8 +37,8 @@ app.route('/user_from_jwt')
   .get(controller.get_user_from_jwt)
 
 app.route('/decode_jwt')
-  .post(controller.get_user_from_jwt)
   .get(controller.get_user_from_jwt)
+  .post(controller.get_user_from_jwt)
 
 
 // Start server
