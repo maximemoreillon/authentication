@@ -40,6 +40,8 @@ app.route('/decode_jwt')
   .get(controller.get_user_from_jwt)
   .post(controller.get_user_from_jwt)
 
+  app.route('/password')
+    .put(controller.password_update)
 
 // Start server
 app.listen(app_port, () => {

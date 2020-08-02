@@ -176,14 +176,17 @@ exports.password_update = (req, res) => {
   if(!token) return res.status(403).send('Token not found in authorization header')
 
   // Check if necessary information provided
-  if( !('new_password' in req.body) ) return res.status(400).send('Missing new password')
+  let new_password = req.body.new_password
+    || req.body.password
+
+  if( !new_password ) return res.status(400).send('Missing new password')
 
   // Verify JWT
   jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
     if(err) return res.status(403).send('Invalid JWT')
 
     // Encrypt new password
-    bcrypt.hash(req.body.new_password, 10, (err, hash) => {
+    bcrypt.hash(new_password, 10, (err, password_hashed) => {
       if(err) return res.status(500).send(`Error hashing password ${err}`)
 
       // Update DB
@@ -191,11 +194,18 @@ exports.password_update = (req, res) => {
       var session = driver.session()
       session
       .run(`
+        // Find the user
         MATCH (${field_name}:User)
         WHERE id(${field_name}) = toInteger({id})
+
+        // Set the new password
+        SET ${field_name}.password_hashed = {password_hashed}
+
+        // Return the user
         RETURN ${field_name}
         `, {
           id: decoded.id,
+          password_hashed: password_hashed
         })
       .then(result => {})
       .catch(error => { res.status(500).send(`Error accessing DB: ${error}`) })
