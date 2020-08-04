@@ -33,8 +33,8 @@ exports.login = (req, res) => {
     MATCH (${field_name}:User)
 
     // Allow user to identify using either userrname or email address
-    WHERE ${field_name}.username={identifier}
-      OR ${field_name}.email_address={identifier}
+    WHERE ${field_name}.username=$identifier
+      OR ${field_name}.email_address=$identifier
 
     // Return user if found
     RETURN ${field_name}
@@ -114,7 +114,7 @@ function verify_jwt_and_respond_with_user(token, res){
     session
     .run(`
       MATCH (${field_name}:User)
-      WHERE id(${field_name}) = toInt({user_id})
+      WHERE id(${field_name}) = toInteger($user_id)
       RETURN ${field_name}
       `, {
         user_id: decoded.user_id,
@@ -196,7 +196,7 @@ exports.password_update = (req, res) => {
       .run(`
         // Find the user
         MATCH (${field_name}:User)
-        WHERE id(${field_name}) = toInteger({id})
+        WHERE id(${field_name}) = toInteger($id)
 
         // Set the new password
         SET ${field_name}.password_hashed = {password_hashed}
