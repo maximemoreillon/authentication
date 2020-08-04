@@ -199,7 +199,7 @@ exports.password_update = (req, res) => {
         WHERE id(${field_name}) = toInteger($id)
 
         // Set the new password
-        SET ${field_name}.password_hashed = {password_hashed}
+        SET ${field_name}.password_hashed = $password_hashed
 
         // Return the user
         RETURN ${field_name}
