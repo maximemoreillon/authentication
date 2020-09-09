@@ -22,7 +22,12 @@ app.use(cors())
 
 // Express routes
 app.get('/', (req, res) => {
-  res.send(`Authentication API ${pjson.version}, Maxime MOREILLON`)
+  res.send({
+    application_name: 'Authentication API',
+    author: 'Maxime MOREILLON',
+    version: pjson.version,
+    neo4j_url: process.env.NEO4J_URL,
+  })
 })
 
 app.route('/login')
