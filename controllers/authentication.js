@@ -6,6 +6,33 @@ const driver = require('../neo4j_driver.js')
 
 dotenv.config()
 
+let register_last_login = (user_id) => {
+  const field_name = 'user'
+  let session = driver.session()
+  session
+  .run(`
+    MATCH (${field_name}:User)
+    WHERE id(${field_name}) = toInteger($user_id)
+
+    SET ${field_name}.last_login = date()
+
+    // Return user if found
+    RETURN ${field_name}
+    `, {
+      user_id: user_id,
+    })
+  .then(() => {
+    console.log(`Successfully registered last login for user ${user_id}`)
+  })
+  .catch((error) => {
+    console.log(`Error setting last login: ${error}`)
+  })
+  .finally( () => {
+    session.close()
+  })
+
+}
+
 exports.login = (req, res) => {
 
   // Check if all necessary login information is provided
@@ -27,7 +54,7 @@ exports.login = (req, res) => {
 
   // Here, could think of getting user from user management microservice
   const field_name = 'user'
-  var session = driver.session()
+  let session = driver.session()
   session
   .run(`
     MATCH (${field_name}:User)
@@ -92,7 +119,10 @@ exports.login = (req, res) => {
         console.log(`Successful login from user ${user.identity.low}`)
 
         // Respond with JWT
-        res.send({jwt: token});
+        res.send({jwt: token})
+
+        // Save the last login time of the user
+        register_last_login(user.identity.low)
 
       })
     })
@@ -129,7 +159,6 @@ function verify_jwt_and_respond_with_user(token, res){
 
 
       res.send(user)
-
     })
     .catch(error => { res.status(500).send(`Error while looking for user: ${error}`) })
     .finally( () => session.close())
