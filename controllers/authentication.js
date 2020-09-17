@@ -90,6 +90,12 @@ exports.login = (req, res) => {
       return res.status(500).send('User does not have a password')
     }
 
+    // Check if account is locked
+    if(user.properties.locked) {
+      console.log(`User ${user.identity.low} is locked`)
+      return res.status(403).send('User account is locked')
+    }
+
     // Now check if the password is correct
     bcrypt.compare(req.body.password, user.properties.password_hashed, (err, result) => {
 
