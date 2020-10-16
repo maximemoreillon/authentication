@@ -6,6 +6,7 @@ const driver = require('../neo4j_driver.js')
 
 dotenv.config()
 
+
 let register_last_login = (user_id) => {
   const field_name = 'user'
   let session = driver.session()
@@ -21,232 +22,237 @@ let register_last_login = (user_id) => {
     `, {
       user_id: user_id,
     })
-  .then(() => {
-    console.log(`Successfully registered last login for user ${user_id}`)
-  })
-  .catch((error) => {
-    console.log(`Error setting last login: ${error}`)
-  })
-  .finally( () => {
-    session.close()
-  })
+  .then(() => { console.log(`[Auth] Successfully registered last login for user ${user_id}`) })
+  .catch((error) => { console.log(`[Auth] Error setting last login: ${error}`) })
+  .finally( () => { session.close() })
 
 }
 
-exports.login = (req, res) => {
+let find_user_in_db = (identifier) => {
 
-  // Check if all necessary login information is provided
-  if( !('password' in req.body) ) {
-    console.log(`Missing password`)
-    return res.status(400).send('Missing password')
-  }
+  return new Promise ( (resolve, reject) => {
 
-
-  let identifier = req.body.email
-    || req.body.email_address
-    || req.body.username
-    || req.body.identifier
-
-  if(!identifier) {
-    console.log(`Missing username or email address`)
-    return res.status(401).send(`Missing username or email address`)
-  }
-
-  // Here, could think of getting user from user management microservice
-  const field_name = 'user'
-  let session = driver.session()
-  session
-  .run(`
-    MATCH (${field_name}:User)
-
-    // Allow user to identify using either userrname or email address
-    WHERE ${field_name}.username=$identifier
-      OR ${field_name}.email_address=$identifier
-
-    // Return user if found
-    RETURN ${field_name}
-    `, {
-      identifier: identifier,
-    })
-  .then(result => {
-
-    // If no or too many users have been found
-    if(result.records.length === 0) {
-      console.log(`User not found in the database`)
-      return res.status(400).send('User not found in the database')
-    }
-
-    if(result.records.length > 1) {
-      console.log(`Multiple users found in the database`)
-      return res.status(400).send('Multiple users found in the database')
-    }
-
-    // if there is at least a match, take the first one (a bit dirty)
-    let user = result.records[0].get(field_name)
-
-    // Check if user has a password
-    if(!user.properties.password_hashed) {
-      console.log(`User ${user.identity.low} does not have a password`)
-      return res.status(500).send('User does not have a password')
-    }
-
-    // Check if account is locked
-    if(user.properties.locked) {
-      console.log(`User ${user.identity.low} is locked`)
-      return res.status(403).send('User account is locked')
-    }
-
-    // Now check if the password is correct
-    bcrypt.compare(req.body.password, user.properties.password_hashed, (err, result) => {
-
-      // Handle hashing errors
-      if(err) {
-        console.log(`Error while verifying password for user ${user.identity.low}`)
-        console.log(err)
-        return res.status(500).send(`Error while verifying password: ${err}`)
-      }
-
-      // Check validity of result
-      if(!result) {
-        console.log(`Incorrect password for user ${user.identity.low}`)
-        return res.status(403).send(`Incorrect password`)
-      }
-
-      // Generate JWT
-      jwt.sign({ user_id: user.identity.low }, process.env.JWT_SECRET, (err, token) => {
-
-        // handle signing errors
-        if(err) {
-          console.log(`Error generating token for user ${user.identity.low}`)
-          console.log(err)
-          return res.status(500).send(`Error while generating token: ${err}`)
-        }
-
-        console.log(`Successful login from user ${user.identity.low}`)
-
-        // Respond with JWT
-        res.send({jwt: token})
-
-        // Save the last login time of the user
-        register_last_login(user.identity.low)
-
-      })
-    })
-
-  })
-  .catch(error => { res.status(500).send(`Error while looking for user: ${error}`) })
-  .finally( () => session.close())
-
-}
-
-
-function verify_jwt_and_respond_with_user(token, res){
-  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if(err) return res.status(403).send('Invalid JWT')
-
-    // Here, could think of getting user from user management microservice
-    const field_name = 'user'
-    var session = driver.session()
+    let session = driver.session()
     session
     .run(`
-      MATCH (${field_name}:User)
-      WHERE id(${field_name}) = toInteger($user_id)
-      RETURN ${field_name}
+      MATCH (user:User)
+
+      // Allow user to identify using either userrname or email address
+      WHERE user.username=$identifier
+        OR user.email_address=$identifier
+        OR id(user) = toInteger($identifier)
+
+      // Return user if found
+      RETURN user
       `, {
-        user_id: decoded.user_id,
+        identifier: identifier,
       })
     .then(result => {
 
-      // If the user has not been found in the database
-      if(result.records.length === 0) return res.status(400).send('User not found in the database')
+      if(result.records.length < 1) return reject({code: 400, message: `User ${identifier} not found`})
+      if(result.records.length > 1) return reject({code: 500, message: `Multiple users found`})
 
-      // if there is at least a match, take the first one (a bit dirty)
-      let user = result.records[0].get(field_name)
+      let user = result.records[0].get('user')
 
+      if(user.properties.locked) return reject({code: 500, message: `User account ${user.identity.low} is locked`})
 
-      res.send(user)
+      resolve(user)
+
+      console.log(`[Neo4J] User ${user.identity.low} found in the DB`)
+
     })
-    .catch(error => { res.status(500).send(`Error while looking for user: ${error}`) })
+    .catch(error => { reject({code: 500, message:error}) })
     .finally( () => session.close())
-  });
+
+  })
+}
+
+let check_password = (password_plain, user) => {
+  return new Promise ( (resolve, reject) => {
+
+    // Retrieve hashed password from user properties
+    const password_hashed = user.properties.password_hashed
+
+    // check if the user has a password
+    if(!password_hashed) return reject({code: 500, message: `User ${user.identity.low} does not have a password`})
+
+    bcrypt.compare(password_plain, password_hashed, (error, password_correct) => {
+
+      // Handle check errors
+      if(error) return reject({code: 500, message: error})
+
+      // Handle incoree
+      if(!password_correct) return reject({code: 403, message: `Incorrect password`})
+
+      resolve(user)
+
+      console.log(`[Auth] Password correct for user ${user.identity.low}`)
+
+    })
+
+  })
+}
+
+let generate_token = (user) => {
+  return new Promise( (resolve, reject) => {
+
+    const JWT_SECRET = process.env.JWT_SECRET
+
+    // Check if the secret is set
+    if(!JWT_SECRET) return reject({code: 500, message: `Token secret not set`})
+
+    const token_content = { user_id: user.identity.low }
+
+    jwt.sign(token_content, JWT_SECRET, (error, token) => {
+
+      // handle signing errors
+      if(error) return reject({code: 500, message: error})
+
+      // Resolve with token
+      resolve(token)
+
+      console.log(`[Auth] Token generated for user ${user.identity.low}`)
+
+    })
+  })
+}
+
+let verify_token = (token) => {
+  return new Promise ( (resolve, reject) => {
+
+    const JWT_SECRET = process.env.JWT_SECRET
+
+    // Check if the secret is set
+    if(!JWT_SECRET) return reject({code: 500, message: `Token secret not set`})
+
+    jwt.verify(token, JWT_SECRET, (error, decoded_token) => {
+
+      if(error) return reject({code: 403, message: `Invalid JWT`})
+
+      resolve(decoded_token)
+
+      console.log(`[Auth] Token decoded successfully`)
+
+    })
+  })
+}
+
+let retrieve_token_from_body_or_query = (req) => {
+  return new Promise ( (resolve, reject) => {
+
+    const token = req.body.token
+      || req.body.jwt
+      || req.query.jwt
+      || req.query.token
+
+    if(!token) return reject({code: 400, message: `Missing token`})
+
+    resolve(token)
+
+    console.log(`[Auth] Token retrieved from body or query`)
+
+  })
+}
+
+let retrieve_token_from_headers = (req) => {
+  return new Promise ( (resolve, reject) => {
+
+    // Check if authorization header set
+    if(!req.headers.authorization) return reject({code: 400, message: `Authorization header not set`})
+    // parse the headers to get the token
+    const token = req.headers.authorization.split(" ")[1];
+    if(!token) return reject({code: 400, message: `Token not found in authorization header`})
+
+    resolve(token)
+
+    console.log(`[Auth] Token retrieved from headers`)
+
+  })
+}
+
+
+
+exports.login = (req, res) => {
+
+  // Input sanitation
+  const identifier = req.body.username
+    || req.body.email_address
+    || req.body.email
+    || req.body.identifier
+
+  const password = req.body.password
+
+  if(!identifier) return res.status(400).send(`Missing username or e-mail address`)
+  if(!password) return res.status(400).send(`Missing password`)
+
+  find_user_in_db(identifier)
+  .then( user => { return check_password(password, user) })
+  .then( user => {
+    // Save the last login time of the user
+    register_last_login(user.identity.low)
+
+    return generate_token(user)
+  })
+  .then( token => { res.send({jwt: token}) })
+  .catch(error => {
+    console.log(error.message || error)
+    res.status(error.code || 500).send(error.message || error)
+  })
 }
 
 exports.whoami = (req, res) => {
   // Retrieves user information based on JWT present in auth header
 
-  // Check if authorization header set
-  if(!req.headers.authorization) return res.status(403).send('Authorization header not set')
-  // parse the headers to get the token
-  let token = req.headers.authorization.split(" ")[1];
-  if(!token) return res.status(403).send('Token not found in authorization header')
+  retrieve_token_from_headers(req)
+  .then( token => {return verify_token(token)})
+  .then( decoded_token => {
 
-  // Verify the token and respond
-  verify_jwt_and_respond_with_user(token, res)
+    const user_id = decoded_token.user_id
+    if(!user_id) throw {code: 400, message: `No user ID in token`}
+
+    return find_user_in_db(user_id)
+
+  })
+  .then( user => {
+    console.log(`[Auth] user ${user.identity.low} retrieved using token`)
+    res.send(user)
+  })
+  .catch(error => {
+    console.log(`[Auth] ${error.message || error}`)
+    res.status(error.code || 500).send(error.message || error)
+  })
+}
+
+exports.decode_token = (req, res) => {
+
+  retrieve_token_from_body_or_query(req)
+  .then( token => {return verify_token(token)})
+  .then(decoded_token => { res.send(decoded_token) })
+  .catch(error => {
+    console.log(error.message || error)
+    res.status(error.code || 500).send(error.message || error)
+  })
+
 }
 
 exports.get_user_from_jwt = (req, res) => {
-  console.log('Hello')
 
-  let jwt = req.query.jwt
-    || req.body.jwt
+  retrieve_token_from_body_or_query(req)
+  .then( token => {return verify_token(token)})
+  .then( decoded_token => {
 
-  if(! jwt) {
-    console.log(`JWT not provided`)
-    return res.status(400).send('JWT not provided')
-  }
+    const user_id = decoded_token.user_id
+    if(!user_id) throw {code: 400, message: `No user ID in token`}
 
-  // Verify the token and respond
-  verify_jwt_and_respond_with_user(jwt, res)
-}
+    return find_user_in_db(user_id)
 
-
-exports.password_update = (req, res) => {
-
-  // Currently only works to update one's own password
-
-  if(!req.headers.authorization) return res.status(403).send('Authorization header not set')
-
-  // parse the headers to get the token
-  let token = req.headers.authorization.split(" ")[1];
-  if(!token) return res.status(403).send('Token not found in authorization header')
-
-  // Check if necessary information provided
-  let new_password = req.body.new_password
-    || req.body.password
-
-  if( !new_password ) return res.status(400).send('Missing new password')
-
-  // Verify JWT
-  jwt.verify(token, secrets.jwt_secret, (err, decoded) => {
-    if(err) return res.status(403).send('Invalid JWT')
-
-    // Encrypt new password
-    bcrypt.hash(new_password, 10, (err, password_hashed) => {
-      if(err) return res.status(500).send(`Error hashing password ${err}`)
-
-      // Update DB
-      const field_name = 'user'
-      var session = driver.session()
-      session
-      .run(`
-        // Find the user
-        MATCH (${field_name}:User)
-        WHERE id(${field_name}) = toInteger($id)
-
-        // Set the new password
-        SET ${field_name}.password_hashed = $password_hashed
-
-        // Return the user
-        RETURN ${field_name}
-        `, {
-          id: decoded.id,
-          password_hashed: password_hashed
-        })
-      .then(result => {})
-      .catch(error => { res.status(500).send(`Error accessing DB: ${error}`) })
-      .finally(() => session.close())
-
-    });
   })
-
+  .then( user => {
+    console.log(`[Auth] user ${user.identity.low} retrieved using token`)
+    res.send(user)
+  })
+  .catch(error => {
+    console.log(`[Auth] ${error.message || error}`)
+    res.status(error.code || 500).send(error.message || error)
+  })
 }
