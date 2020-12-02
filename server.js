@@ -5,6 +5,7 @@ const cors = require('cors')
 const dotenv = require('dotenv')
 const pjson = require('./package.json')
 const controller = require('./controllers/authentication.js')
+const apiMetrics = require('prometheus-api-metrics')
 
 // Parse .env file
 dotenv.config()
@@ -19,6 +20,7 @@ const app = express()
 // Expressing settings
 app.use(bodyParser.json())
 app.use(cors())
+app.use(apiMetrics())
 
 // Express routes
 app.get('/', (req, res) => {
