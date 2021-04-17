@@ -2,12 +2,12 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const dotenv = require('dotenv')
 
-const driver = require('../neo4j_driver.js')
+const driver = require('../../utils/neo4j_driver_v1.js')
 
 dotenv.config()
 
 
-let register_last_login = (user_id) => {
+const register_last_login = (user_id) => {
   const field_name = 'user'
   let session = driver.session()
   session
@@ -19,20 +19,18 @@ let register_last_login = (user_id) => {
 
     // Return user if found
     RETURN ${field_name}
-    `, {
-      user_id: user_id,
-    })
+    `, { user_id })
   .then(() => { console.log(`[Auth] Successfully registered last login for user ${user_id}`) })
   .catch((error) => { console.log(`[Auth] Error setting last login: ${error}`) })
   .finally( () => { session.close() })
 
 }
 
-let find_user_in_db = (identifier) => {
+const find_user_in_db = (identifier) => {
 
   return new Promise ( (resolve, reject) => {
 
-    let session = driver.session()
+    const session = driver.session()
     session
     .run(`
       MATCH (user:User)
@@ -52,13 +50,13 @@ let find_user_in_db = (identifier) => {
       if(result.records.length < 1) return reject({code: 400, message: `User ${identifier} not found`})
       if(result.records.length > 1) return reject({code: 500, message: `Multiple users found`})
 
-      let user = result.records[0].get('user')
+      const user = result.records[0].get('user')
 
-      if(user.properties.locked) return reject({code: 500, message: `User account ${user.identity.low} is locked`})
+      if(user.properties.locked) return reject({code: 500, message: `User account ${user.identity} is locked`})
 
       resolve(user)
 
-      console.log(`[Neo4J] User ${user.identity.low} found in the DB`)
+      console.log(`[Neo4J] User ${user.identity} found in the DB`)
 
     })
     .catch(error => { reject({code: 500, message:error}) })
@@ -67,14 +65,14 @@ let find_user_in_db = (identifier) => {
   })
 }
 
-let check_password = (password_plain, user) => {
+const check_password = (password_plain, user) => {
   return new Promise ( (resolve, reject) => {
 
     // Retrieve hashed password from user properties
     const password_hashed = user.properties.password_hashed
 
     // check if the user has a password
-    if(!password_hashed) return reject({code: 500, message: `User ${user.identity.low} does not have a password`})
+    if(!password_hashed) return reject({code: 500, message: `User ${user.identity} does not have a password`})
 
     bcrypt.compare(password_plain, password_hashed, (error, password_correct) => {
 
@@ -86,14 +84,14 @@ let check_password = (password_plain, user) => {
 
       resolve(user)
 
-      console.log(`[Auth] Password correct for user ${user.identity.low}`)
+      console.log(`[Auth] Password correct for user ${user.identity}`)
 
     })
 
   })
 }
 
-let generate_token = (user) => {
+const generate_token = (user) => {
   return new Promise( (resolve, reject) => {
 
     const JWT_SECRET = process.env.JWT_SECRET
@@ -111,7 +109,7 @@ let generate_token = (user) => {
       // Resolve with token
       resolve(token)
 
-      console.log(`[Auth] Token generated for user ${user.identity.low}`)
+      console.log(`[Auth] Token generated for user ${user.identity}`)
 
     })
   })
@@ -137,7 +135,7 @@ let verify_token = (token) => {
   })
 }
 
-let retrieve_token_from_body_or_query = (req) => {
+const retrieve_token_from_body_or_query = (req) => {
   return new Promise ( (resolve, reject) => {
 
     const token = req.body.token
@@ -185,6 +183,8 @@ exports.login = (req, res) => {
   if(!identifier) return res.status(400).send(`Missing username or e-mail address`)
   if(!password) return res.status(400).send(`Missing password`)
 
+  console.log(`[Auth] Login attempt from user identified as ${identifier}`)
+
   find_user_in_db(identifier)
   .then( user => { return check_password(password, user) })
   .then( user => {
@@ -214,7 +214,7 @@ exports.whoami = (req, res) => {
 
   })
   .then( user => {
-    console.log(`[Auth] user ${user.identity.low} retrieved using token`)
+    console.log(`[Auth] user ${user.identity} retrieved using token`)
     res.send(user)
   })
   .catch(error => {
@@ -248,7 +248,7 @@ exports.get_user_from_jwt = (req, res) => {
 
   })
   .then( user => {
-    console.log(`[Auth] user ${user.identity.low} retrieved using token`)
+    console.log(`[Auth] user ${user.identity} retrieved using token`)
     res.send(user)
   })
   .catch(error => {
