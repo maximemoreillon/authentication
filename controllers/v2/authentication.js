@@ -8,10 +8,9 @@ dotenv.config()
 
 
 const register_last_login = (user_id) => {
+
   const field_name = 'user'
-  let session = driver.session()
-  session
-  .run(`
+  const query = `
     MATCH (${field_name}:User)
     WHERE id(${field_name}) = toInteger($user_id)
 
@@ -19,10 +18,15 @@ const register_last_login = (user_id) => {
 
     // Return user if found
     RETURN ${field_name}
-    `, { user_id })
-  .then(() => { console.log(`[Auth] Successfully registered last login for user ${user_id}`) })
-  .catch((error) => { console.log(`[Auth] Error setting last login: ${error}`) })
-  .finally( () => { session.close() })
+    `
+  const parameters = { user_id }
+  const session = driver.session()
+
+  session
+    .run( query, parameters )
+    .then(() => { console.log(`[Auth] Successfully registered last login for user ${user_id}`) })
+    .catch((error) => { console.log(`[Auth] Error setting last login: ${error}`) })
+    .finally( () => { session.close() })
 
 }
 
@@ -30,9 +34,7 @@ const find_user_in_db = (identifier) => {
 
   return new Promise ( (resolve, reject) => {
 
-    const session = driver.session()
-    session
-    .run(`
+    const query = `
       MATCH (user:User)
 
       // Allow user to identify using either userrname or email address
@@ -42,9 +44,13 @@ const find_user_in_db = (identifier) => {
 
       // Return user if found
       RETURN user
-      `, {
-        identifier: identifier,
-      })
+      `
+
+    const parameters = {identifier}
+
+    const session = driver.session()
+    session
+    .run(query, parameters)
     .then(result => {
 
       if(result.records.length < 1) return reject({code: 400, message: `User ${identifier} not found`})
@@ -99,7 +105,7 @@ const generate_token = (user) => {
     // Check if the secret is set
     if(!JWT_SECRET) return reject({code: 500, message: `Token secret not set`})
 
-    const token_content = { user_id: user.identity.low }
+    const token_content = { user_id: user.identity }
 
     jwt.sign(token_content, JWT_SECRET, (error, token) => {
 
@@ -115,7 +121,7 @@ const generate_token = (user) => {
   })
 }
 
-let verify_token = (token) => {
+const verify_token = (token) => {
   return new Promise ( (resolve, reject) => {
 
     const JWT_SECRET = process.env.JWT_SECRET
@@ -152,7 +158,7 @@ const retrieve_token_from_body_or_query = (req) => {
   })
 }
 
-let retrieve_token_from_headers = (req) => {
+const retrieve_token_from_headers = (req) => {
   return new Promise ( (resolve, reject) => {
 
     // Check if authorization header set
@@ -186,14 +192,14 @@ exports.login = (req, res) => {
   console.log(`[Auth] Login attempt from user identified as ${identifier}`)
 
   find_user_in_db(identifier)
-  .then( user => { return check_password(password, user) })
+  .then( user =>  check_password(password, user) )
   .then( user => {
     // Save the last login time of the user
-    register_last_login(user.identity.low)
+    register_last_login(user.identity)
 
     return generate_token(user)
   })
-  .then( token => { res.send({jwt: token}) })
+  .then( token => { res.send({ jwt: token }) })
   .catch(error => {
     console.log(error.message || error)
     res.status(error.code || 500).send(error.message || error)
@@ -204,7 +210,7 @@ exports.whoami = (req, res) => {
   // Retrieves user information based on JWT present in auth header
 
   retrieve_token_from_headers(req)
-  .then( token => {return verify_token(token)})
+  .then( token =>  verify_token(token) )
   .then( decoded_token => {
 
     const user_id = decoded_token.user_id
@@ -214,8 +220,9 @@ exports.whoami = (req, res) => {
 
   })
   .then( user => {
-    console.log(`[Auth] user ${user.identity} retrieved using token`)
+    delete user.properties.password_hashed
     res.send(user)
+    console.log(`[Auth] user ${user.identity} retrieved using token`)
   })
   .catch(error => {
     console.log(`[Auth] ${error.message || error}`)
@@ -225,9 +232,11 @@ exports.whoami = (req, res) => {
 
 exports.decode_token = (req, res) => {
 
+  // Not useful not widely used
+
   retrieve_token_from_body_or_query(req)
-  .then( token => {return verify_token(token)})
-  .then(decoded_token => { res.send(decoded_token) })
+  .then( token => verify_token(token) )
+  .then( decoded_token => { res.send(decoded_token) })
   .catch(error => {
     console.log(error.message || error)
     res.status(error.code || 500).send(error.message || error)
@@ -238,7 +247,7 @@ exports.decode_token = (req, res) => {
 exports.get_user_from_jwt = (req, res) => {
 
   retrieve_token_from_body_or_query(req)
-  .then( token => {return verify_token(token)})
+  .then( token => verify_token(token) )
   .then( decoded_token => {
 
     const user_id = decoded_token.user_id
@@ -248,8 +257,9 @@ exports.get_user_from_jwt = (req, res) => {
 
   })
   .then( user => {
-    console.log(`[Auth] user ${user.identity} retrieved using token`)
+    delete user.properties.password_hashed
     res.send(user)
+    console.log(`[Auth] user ${user.identity} retrieved using token`)
   })
   .catch(error => {
     console.log(`[Auth] ${error.message || error}`)

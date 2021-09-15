@@ -214,8 +214,9 @@ exports.whoami = (req, res) => {
 
   })
   .then( user => {
-    console.log(`[Auth] user ${user.identity} retrieved using token`)
+    delete user.properties.password_hashed
     res.send(user)
+    console.log(`[Auth] user ${user.identity} retrieved using token`)
   })
   .catch(error => {
     console.log(`[Auth] ${error.message || error}`)
@@ -248,8 +249,9 @@ exports.get_user_from_jwt = (req, res) => {
 
   })
   .then( user => {
-    console.log(`[Auth] user ${user.identity} retrieved using token`)
+    delete user.properties.password_hashed
     res.send(user)
+    console.log(`[Auth] user ${user.identity} retrieved using token`)
   })
   .catch(error => {
     console.log(`[Auth] ${error.message || error}`)
