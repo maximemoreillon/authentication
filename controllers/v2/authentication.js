@@ -1,10 +1,8 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const dotenv = require('dotenv')
-
 const driver = require('../../utils/neo4j_driver_v2.js')
+const {jwt_secret} = require('../../config.js')
 
-dotenv.config()
 
 
 const register_last_login = (user_id) => {
@@ -51,12 +49,12 @@ const find_user_in_db = (identifier) => {
     const session = driver.session()
     session
     .run(query, parameters)
-    .then(result => {
+    .then( ({records}) => {
 
-      if(result.records.length < 1) return reject({code: 400, message: `User ${identifier} not found`})
-      if(result.records.length > 1) return reject({code: 500, message: `Multiple users found`})
+      if(records.length < 1) return reject({code: 400, message: `User ${identifier} not found`})
+      if(records.length > 1) return reject({code: 500, message: `Multiple users found`})
 
-      const user = result.records[0].get('user')
+      const user = records[0].get('user')
 
       if(user.properties.locked) return reject({code: 500, message: `User account ${user.identity} is locked`})
 
@@ -100,14 +98,12 @@ const check_password = (password_plain, user) => {
 const generate_token = (user) => {
   return new Promise( (resolve, reject) => {
 
-    const JWT_SECRET = process.env.JWT_SECRET
-
     // Check if the secret is set
-    if(!JWT_SECRET) return reject({code: 500, message: `Token secret not set`})
+    if(!jwt_secret) return reject({code: 500, message: `Token secret not set`})
 
     const token_content = { user_id: user.identity }
 
-    jwt.sign(token_content, JWT_SECRET, (error, token) => {
+    jwt.sign(token_content, jwt_secret, (error, token) => {
 
       // handle signing errors
       if(error) return reject({code: 500, message: error})
@@ -124,12 +120,10 @@ const generate_token = (user) => {
 const verify_token = (token) => {
   return new Promise ( (resolve, reject) => {
 
-    const JWT_SECRET = process.env.JWT_SECRET
-
     // Check if the secret is set
-    if(!JWT_SECRET) return reject({code: 500, message: `Token secret not set`})
+    if(!jwt_secret) return reject({code: 500, message: `Token secret not set`})
 
-    jwt.verify(token, JWT_SECRET, (error, decoded_token) => {
+    jwt.verify(token, jwt_secret, (error, decoded_token) => {
 
       if(error) return reject({code: 403, message: `Invalid JWT`})
 

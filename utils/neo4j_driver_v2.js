@@ -1,13 +1,13 @@
 const neo4j = require('neo4j-driver')
-const dotenv = require('dotenv')
+const {
+  neo4j: {
+    url,
+    auth: { username, password }
+  }
+} = require('../config.js')
 
-dotenv.config()
+const auth = neo4j.auth.basic(username, password)
+const options = { disableLosslessIntegers: true }
+const driver = neo4j.driver(url, auth, options)
 
-module.exports = neo4j.driver(
-  process.env.NEO4J_URL,
-  neo4j.auth.basic(
-    process.env.NEO4J_USERNAME,
-    process.env.NEO4J_PASSWORD,
-  ),
-  { disableLosslessIntegers: true },
-)
+module.exports = driver

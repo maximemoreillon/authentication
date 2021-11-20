@@ -1,25 +1,29 @@
 // modules
 const express = require('express')
-const bodyParser = require('body-parser')
 const cors = require('cors')
 const dotenv = require('dotenv')
 const apiMetrics = require('prometheus-api-metrics')
 const v1_router = require('./routes/v1/auth.js')
 const v2_router = require('./routes/v2/auth.js')
-const pjson = require('./package.json')
-
+const {
+  version,
+  author
+} = require('./package.json')
+const {
+  app_port,
+  jwt_secret,
+  neo4j: {url: neo4j_url},
+} = require('./config.js')
 // Parse .env file
 dotenv.config()
 
-console.log(`Authentication microservice v${pjson.version}`)
-// Get app port from env varialbes if available, otherwise use 80
-const app_port = process.env.APP_PORT || 80
+console.log(`Authentication microservice v${version}`)
 
 // Instanciate an express server
 const app = express()
 
 // Expressing settings
-app.use(bodyParser.json())
+app.use(express.json())
 app.use(cors())
 app.use(apiMetrics())
 
@@ -27,16 +31,15 @@ app.use(apiMetrics())
 app.get('/', (req, res) => {
   res.send({
     application_name: 'Authentication API',
-    author: pjson.author,
-    version: pjson.version,
-    neo4j_url: process.env.NEO4J_URL,
-    jwt_secret_set: !!process.env.JWT_SECRET,
+    author,
+    version,
+    neo4j_url,
+    jwt_secret_set: !!jwt_secret,
   })
 })
 
 app.use('/', v1_router)
 app.use('/v2', v2_router)
-
 
 // Start server
 app.listen(app_port, () => {
