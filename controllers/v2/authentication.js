@@ -2,6 +2,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const driver = require('../../utils/neo4j_driver_v2.js')
 const {jwt_secret} = require('../../config.js')
+const Cookies = require('cookies')
 
 
 
