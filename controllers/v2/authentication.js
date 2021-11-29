@@ -185,7 +185,7 @@ exports.whoami = async (req, res) => {
 
   try {
     const token = await retrieve_jwt(req, res)
-    const {user_id} = verify_token(token)
+    const {user_id} = await verify_token(token)
     if(!user_id) throw {code: 400, message: `No user ID in token`}
     const user = await find_user_in_db(user_id)
 
