@@ -11,21 +11,10 @@ variables:
   CONTAINER_IMAGE_LATEST: ${CONTAINER_IMAGE}:latest
   CONTAINER_IMAGE_TAGGED: ${CONTAINER_IMAGE}:${CI_COMMIT_SHORT_SHA}
   K8S_INGRESS_DOMAIN: api.authentication.maximemoreillon.com
-  
+
 # Needed for Docker in docker build
 services:
   - name: docker:19.03.12-dind
-
-build:
-  stage: build
-  tags:
-    - dind
-  before_script:
-    # Docker hub login
-    - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
-  script:
-    - docker build -t ${CONTAINER_IMAGE_TEST} .
-    - docker push ${CONTAINER_IMAGE_TEST}
 
 build:
   stage: build
