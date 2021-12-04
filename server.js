@@ -5,14 +5,11 @@ const dotenv = require('dotenv')
 const apiMetrics = require('prometheus-api-metrics')
 const v1_router = require('./routes/v1/auth.js')
 const v2_router = require('./routes/v2/auth.js')
-const {
-  version,
-  author
-} = require('./package.json')
+const { version, author } = require('./package.json')
+const { url: neo4j_url, get_connected } = require('./db.js')
 const {
   app_port,
   jwt_secret,
-  neo4j: {url: neo4j_url},
 } = require('./config.js')
 // Parse .env file
 dotenv.config()
@@ -33,7 +30,10 @@ app.get('/', (req, res) => {
     application_name: 'Authentication API',
     author,
     version,
-    neo4j_url,
+    neo4j: {
+      url: neo4j_url,
+      connected: get_connected()
+    },
     jwt_secret_set: !!jwt_secret,
   })
 })

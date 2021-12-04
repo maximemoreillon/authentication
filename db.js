@@ -16,8 +16,29 @@ const options = {
   v2: { disableLosslessIntegers: true }
 }
 
-exports.url = NEO4J_URL
-exports.drivers = {
+
+const drivers = {
   v1: neo4j.driver(NEO4J_URL, auth, options.v1),
   v2: neo4j.driver(NEO4J_URL, auth, options.v2)
 }
+
+let connected = false
+const connection_check = async () => {
+  try {
+    const session = drivers.v2.session()
+    await session.run(`RETURN 'OK'`)
+    console.log(`[Neo4J] connected`)
+    connected = true
+  }
+  catch (e) {
+    console.log(e)
+    console.log(`[Neo4J] connection error`)
+  }
+}
+
+connection_check()
+
+
+exports.url = NEO4J_URL
+exports.get_connected = () => connected
+exports.drivers = drivers
