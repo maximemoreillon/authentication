@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
       - name: ${APPLICATION_NAME}
-        image: ${DOCKER_HUB_USERNAME}/${APPLICATION_NAME}
+        image: ${CONTAINER_IMAGE_TAGGED}
         # Ensures that k8s pulls a new image on restart
         imagePullPolicy: Always
         ports:
@@ -23,9 +23,6 @@ spec:
         envFrom:
         - secretRef:
            name: environment-variables
-      # Used to log in the registry
-      #imagePullSecrets:
-      #- name: registry-credentials
 ---
 apiVersion: v1
 kind: Service
@@ -48,10 +45,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - ${CERTIFICATE_DOMAIN}
+    - ${K8S_INGRESS_DOMAIN}
     secretName: ${APPLICATION_NAME} # Name of the secret, i.e. the certificates
   rules:
-  - host: ${CERTIFICATE_DOMAIN}
+  - host: ${K8S_INGRESS_DOMAIN}
     http:
       paths:
       - path: /

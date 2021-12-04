@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const driver = require('../../utils/neo4j_driver_v2.js')
+const {drivers: {v2: driver}} = require('../../db.js')
 const {jwt_secret} = require('../../config.js')
 const Cookies = require('cookies')
 
@@ -229,7 +229,7 @@ exports.get_user_from_jwt = async (req, res) => {
     // Hide password_hashed from response
     delete user.properties.password_hashed
     res.send(user)
-    console.log(`[Auth] user ${user.identity} retrieved using token`)
+    console.log(`[Auth] user ${user_id} retrieved using token`)
 
   } catch (error) {
     console.log(error.message || error)

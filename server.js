@@ -44,4 +44,6 @@ app.use('/v2', v2_router)
 // Start server
 app.listen(app_port, () => {
   console.log(`[Express] Express listening on *:${app_port}`);
-});
+})
+
+exports.app = app

@@ -1,8 +1,7 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const dotenv = require('dotenv')
-
-const driver = require('../../utils/neo4j_driver_v1.js')
+const {drivers: {v1: driver}} = require('../../db.js')
 
 dotenv.config()
 
