@@ -11,93 +11,17 @@ const {
   retrieve_token_from_body_or_query,
   retrieve_jwt,
   check_password,
+  find_user_in_db,
+  find_user_by_id,
+  register_last_login,
 } = require('../../utils.js')
 
 dotenv.config()
 
 
-const register_last_login = (user_id) => {
-  const session = driver.session()
-  const query = `
-    ${user_query}
-    SET user.last_login = date()
-    RETURN user
-    `
-  session.run(query, { user_id })
-  .then(() => { console.log(`[Auth v1] Successfully registered last login for user ${user_id}`) })
-  .catch((error) => { console.log(`[Auth v1] Error setting last login: ${error}`) })
-  .finally( () => { session.close() })
-
-}
-
-const find_user_in_db = (identifier) => new Promise ( (resolve, reject) => {
-
-  const session = driver.session()
-
-  const query = `
-    MATCH (user:User)
-
-    // Allow user to identify using either userrname or email address
-    WHERE user.username = $identifier
-      OR user.email_address = $identifier
-      OR user._id = $identifier // <= WARNING! No longer using identity
-
-    // Return user if found
-    RETURN user
-    `
-
-  // IMPORTANT: Forcing string
-  const params = {identifier: identifier.toString()}
-
-  session.run(query, params)
-  .then( ({records}) => {
-
-    if(!records.length) return reject({code: 403, message: `User ${identifier} not found`})
-    if(records.length > 1) return reject({code: 500, message: `Multiple users found`})
-
-    const user = records[0].get('user')
-
-    if(user.properties.locked) return reject({code: 500, message: `User account ${identifier} is locked`})
-
-    resolve(user)
-
-    console.log(`[Neo4J v1] User ${identifier} found in the DB`)
-
-  })
-  .catch(error => { reject({code: 500, message:error}) })
-  .finally( () => session.close())
-
-})
 
 
-const find_user_by_id = (user_id) => new Promise ( (resolve, reject) => {
 
-  const session = driver.session()
-
-  const query = `${user_query} RETURN user`
-
-
-  const params = {user_id: user_id.toString() }
-
-  session.run(query, params)
-  .then( ({records}) => {
-
-    if(!records.length) return reject({code: 403, message: `User ${identifier} not found`})
-    if(records.length > 1) return reject({code: 500, message: `Multiple users found`})
-
-    const user = records[0].get('user')
-
-
-    console.log(`[Neo4J v1] User ${user_id} found in the DB`)
-
-    resolve(user)
-
-
-  })
-  .catch(error => { reject({code: 500, message:error}) })
-  .finally( () => session.close())
-
-})
 
 
 
@@ -118,13 +42,16 @@ exports.login = async (req, res) => {
 
     console.log(`[Auth V1] Login attempt from user identified as ${identifier}`)
 
-    const user = await find_user_in_db(identifier)
+    const user = await find_user_in_db({driver,identifier})
+
+    if(user.properties.locked) throw {code: 403, message: `User account ${identifier} is locked`}
+
     const {password_hashed, _id} = user.properties
     if(!password_hashed) throw {code: 500, message: 'User does not have a password'}
 
     await check_password(password, password_hashed)
 
-    await register_last_login(_id)
+    await register_last_login({driver, user_id:_id })
 
     const token = await generate_token(user)
     res.send({ jwt: token })
@@ -148,7 +75,7 @@ exports.whoami = (req, res) => {
     const user_id = decoded_token.user_id.low || decoded_token.user_id
     if(!user_id) throw {code: 400, message: `No user ID in token`}
 
-    return find_user_by_id(user_id)
+    return find_user_by_id({driver,user_id})
 
   })
   .then( user => {
@@ -184,7 +111,7 @@ exports.get_user_from_jwt = (req, res) => {
     const user_id = decoded_token.user_id.low || decoded_token.user_id
     if(!user_id) throw {code: 400, message: `No user ID in token`}
 
-    return find_user_by_id(user_id)
+    return find_user_by_id({driver,user_id})
 
   })
   .then( user => {

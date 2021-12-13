@@ -7,97 +7,11 @@ const {
   verify_token,
   generate_token,
   retrieve_jwt,
-  retrieve_token_from_body_or_query
+  retrieve_token_from_body_or_query,
+  find_user_in_db,
+  find_user_by_id,
+  register_last_login
 } = require('../../utils.js')
-
-
-const register_last_login = (user_id) => {
-
-  const query = `
-    ${user_query}
-    SET user.last_login = date()
-    RETURN user
-    `
-  const parameters = { user_id }
-  const session = driver.session()
-
-  return session.run( query, parameters )
-
-
-}
-
-const find_user_in_db = (identifier) => new Promise ( (resolve, reject) => {
-
-  const query = `
-    MATCH (user:User)
-
-    // Allow user to identify using either userrname or email address
-    WHERE user.username = $identifier
-      OR user.email_address  = $identifier
-
-    // Return user if found
-    RETURN user
-    `
-
-  // IMPORTANT: Forcing string
-  const params = {identifier: identifier.toString()}
-
-  const session = driver.session()
-  session
-  .run(query, params)
-  .then( ({records}) => {
-
-    if(!records.length) return reject({code: 403, message: `User ${identifier} not found`})
-    if(records.length > 1) return reject({code: 500, message: `Multiple users found`})
-
-    const user = records[0].get('user')
-
-    if(user.properties.locked) return reject({code: 500, message: `User account ${identifier} is locked`})
-
-    resolve(user)
-
-  })
-  .catch(error => { reject({code: 500, message:error}) })
-  .finally( () => session.close())
-
-})
-
-const find_user_by_id = (user_id) => new Promise ( (resolve, reject) => {
-
-  const query = `${user_query} RETURN user`
-
-  // Forcing string
-  const params = {user_id: user_id.toString() }
-
-  const session = driver.session()
-  session.run(query, params)
-  .then( ({records}) => {
-
-    if(!records.length) return reject({code: 403, message: `User ${user_id} not found`})
-    if(records.length > 1) return reject({code: 500, message: `Multiple users with ID ${user_id} found`})
-
-    const user = records[0].get('user')
-
-    console.log(`[Neo4J v2] User ${user_id} found in the DB`)
-
-    resolve(user)
-
-
-
-  })
-  .catch(error => { reject({code: 500, message:error}) })
-  .finally( () => session.close())
-
-}
-
-
-
-
-
-
-
-
-
 
 
 exports.login = async (req, res) => {
@@ -115,13 +29,15 @@ exports.login = async (req, res) => {
 
     console.log(`[Auth v2] Login attempt from user identified as ${identifier}`)
 
-    const user = await find_user_in_db(identifier)
+    const user = await find_user_in_db({driver,identifier})
+
+    if(user.properties.locked) throw {code: 403, message: `User account ${identifier} is locked`}
 
     const {password_hashed, _id} = user.properties
     if(!password_hashed) throw {code: 500, message: 'User does not have a password'}
     await check_password(password, password_hashed)
 
-    await register_last_login(_id)
+    await register_last_login({driver, user_id:_id })
 
     const token = await generate_token(user)
     res.send({ jwt: token })
@@ -139,7 +55,7 @@ exports.whoami = async (req, res) => {
     const token = await retrieve_jwt(req, res)
     const {user_id} = await verify_token(token)
     if(!user_id) throw {code: 400, message: `No user ID in token`}
-    const user = await find_user_by_id(user_id)
+    const user = await find_user_by_id({driver,user_id})
 
     // Hide password_hashed from response
     delete user.properties.password_hashed
@@ -177,7 +93,7 @@ exports.get_user_from_jwt = async (req, res) => {
     const token = await retrieve_token_from_body_or_query(req)
     const {user_id} = await verify_token(token)
     if(!user_id) throw {code: 400, message: `No user ID in token`}
-    const user = await find_user_by_id(user_id)
+    const user = await find_user_by_id({driver,user_id})
     // Hide password_hashed from response
     delete user.properties.password_hashed
     res.send(user)
