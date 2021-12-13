@@ -1,12 +1,13 @@
 {
   "name": "authentication_microservice",
-  "version": "1.3.6",
+  "version": "2.0.0",
   "description": "Authentication microservice",
   "main": "server.js",
   "scripts": {
     "start": "PORT=80 node server.js",
     "dev": "PORT=7654 nodemon server.js",
-    "test": "mocha --timeout 10000 --exit"
+    "test": "mocha --timeout 10000 --exit",
+    "coverage": "nyc mocha --timeout 15000 --exit"
   },
   "keywords": [],
   "author": "Maxime MOREILLON",
@@ -25,6 +26,7 @@
   "devDependencies": {
     "chai": "^4.3.4",
     "mocha": "^9.1.3",
+    "nyc": "^15.1.0",
     "supertest": "^6.1.6"
   }
 }

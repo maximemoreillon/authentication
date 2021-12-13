@@ -20,29 +20,55 @@ build:
   stage: build
   tags:
     - dind
+
   before_script:
     # Docker hub login
-    - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
-  script:
-    - docker build -t ${CONTAINER_IMAGE_TEST} .
-    - docker push ${CONTAINER_IMAGE_TEST}
+    - >
+      echo "${DOCKER_HUB_PASSWORD}" |
+      docker login
+      --username ${DOCKER_HUB_USERNAME}
+      --password-stdin
+    # Creating network for TDD
+    - docker network create ${TEST_NETWORK}
+    - >
+      docker run
+      -d
+      --rm
+      --name ${TEST_DB}
+      --network ${TEST_NETWORK}
+      --hostname ${TEST_DB}
+      --env NEO4J_AUTH=none
+      neo4j:3.5-community
+    - sleep 60 # Wait for Neo4J to become available
+    # Deploy a user-manager / authentication system
+    - >
+      docker run
+      -d
+      --rm
+      --name ${TEST_USER_MANAGER}
+      --network ${TEST_NETWORK}
+      --hostname ${TEST_USER_MANAGER}
+      --env NEO4J_URL=bolt://${TEST_DB}:7687
+      --env NEO4J_USERNAME=neo4j
+      --env NEO4J_PASSWORD=neo4j
+      --env JWT_SECRET=keyboardcat
+      moreillon/employee-manager
 
-test:
-  stage: test
-  tags:
-    - dind
-  before_script:
-    - echo "${DOCKER_HUB_PASSWORD}" | docker login --username ${DOCKER_HUB_USERNAME} --password-stdin
+
   script:
-    # Run test
     - >
       docker run
       --rm
-      --name tdd
-      -e JWT_SECRET=keyboardcat
+      --name tdd-app
+      --network ${TEST_NETWORK}
+      --env NEO4J_URL=bolt://${TEST_DB}:7687
+      --env IDENTIFICATION_URL=http://${TEST_USER_MANAGER}/v2/users/self
+      --env LOGIN_URL=http://${TEST_USER_MANAGER}/auth/login
+      --env TEST_USER_USERNAME=admin
+      --env TEST_USER_PASSWORD=admin
       ${CONTAINER_IMAGE_TEST}
-      npm run test
-    # Tagging
+      npm run coverage
+    # If pass, then push the images
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_TAGGED}
     - docker tag ${CONTAINER_IMAGE_TEST} ${CONTAINER_IMAGE_LATEST}
     # Pushing

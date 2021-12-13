@@ -1,4 +1,9 @@
 # Authentication microservice
+
+[![pipeline status](https://gitlab.com/moreillon_k8s/authentication/badges/master/pipeline.svg)](https://gitlab.com/moreillon_k8s/authentication)
+[![coverage report](https://gitlab.com/moreillon_k8s/authentication/badges/master/coverage.svg)](https://gitlab.com/moreillon_k8s/authentication)
+
+
 Authentication microservice that delivers a JWT upon receiving correct credentials.
 Here, users are stored in a Neo4J database.
 

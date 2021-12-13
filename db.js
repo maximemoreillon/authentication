@@ -24,6 +24,7 @@ const drivers = {
 
 let connected = false
 const connection_check = async () => {
+  console.log(`[Neo4J] Connection check...`)
   try {
     const session = drivers.v2.session()
     await session.run(`RETURN 'OK'`)
@@ -36,9 +37,7 @@ const connection_check = async () => {
   }
 }
 
-connection_check()
-
-
 exports.url = NEO4J_URL
+exports.connection_check = connection_check
 exports.get_connected = () => connected
 exports.drivers = drivers

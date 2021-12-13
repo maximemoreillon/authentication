@@ -6,7 +6,11 @@ const apiMetrics = require('prometheus-api-metrics')
 const v1_router = require('./routes/v1/auth.js')
 const v2_router = require('./routes/v2/auth.js')
 const { version, author } = require('./package.json')
-const { url: neo4j_url, get_connected } = require('./db.js')
+const {
+  url: neo4j_url,
+  get_connected,
+  connection_check: db_connection_check,
+ } = require('./db.js')
 const {
   app_port,
   jwt_secret,
@@ -15,6 +19,8 @@ const {
 dotenv.config()
 
 console.log(`Authentication microservice v${version}`)
+
+db_connection_check()
 
 // Instanciate an express server
 const app = express()
@@ -39,6 +45,7 @@ app.get('/', (req, res) => {
 })
 
 app.use('/', v1_router)
+app.use('/v1', v1_router)
 app.use('/v2', v2_router)
 
 // Start server
