@@ -1,6 +1,7 @@
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const {jwt_secret} = require('./config.js')
+const Cookies = require('cookies')
 
 exports.error_handling = (error, res) => {
   const {tag} = error
