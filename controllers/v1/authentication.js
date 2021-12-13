@@ -70,6 +70,36 @@ const find_user_in_db = (identifier) => new Promise ( (resolve, reject) => {
 })
 
 
+const find_user_by_id = (user_id) => new Promise ( (resolve, reject) => {
+
+  const session = driver.session()
+
+  const query = `${user_query} RETURN user`
+
+
+  const params = {user_id: user_id.toString() }
+
+  session.run(query, params)
+  .then( ({records}) => {
+
+    if(!records.length) return reject({code: 403, message: `User ${identifier} not found`})
+    if(records.length > 1) return reject({code: 500, message: `Multiple users found`})
+
+    const user = records[0].get('user')
+
+
+    console.log(`[Neo4J v1] User ${user_id} found in the DB`)
+
+    resolve(user)
+
+
+  })
+  .catch(error => { reject({code: 500, message:error}) })
+  .finally( () => session.close())
+
+})
+
+
 
 
 
@@ -118,7 +148,7 @@ exports.whoami = (req, res) => {
     const user_id = decoded_token.user_id.low || decoded_token.user_id
     if(!user_id) throw {code: 400, message: `No user ID in token`}
 
-    return find_user_in_db(user_id)
+    return find_user_by_id(user_id)
 
   })
   .then( user => {
@@ -154,7 +184,7 @@ exports.get_user_from_jwt = (req, res) => {
     const user_id = decoded_token.user_id.low || decoded_token.user_id
     if(!user_id) throw {code: 400, message: `No user ID in token`}
 
-    return find_user_in_db(user_id)
+    return find_user_by_id(user_id)
 
   })
   .then( user => {

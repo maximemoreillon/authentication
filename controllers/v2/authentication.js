@@ -34,7 +34,6 @@ const find_user_in_db = (identifier) => new Promise ( (resolve, reject) => {
     // Allow user to identify using either userrname or email address
     WHERE user.username = $identifier
       OR user.email_address  = $identifier
-      OR user._id = $identifier // <= No longer using identity
 
     // Return user if found
     RETURN user
@@ -62,6 +61,34 @@ const find_user_in_db = (identifier) => new Promise ( (resolve, reject) => {
   .finally( () => session.close())
 
 })
+
+const find_user_by_id = (user_id) => new Promise ( (resolve, reject) => {
+
+  const query = `${user_query} RETURN user`
+
+  // Forcing string
+  const params = {user_id: user_id.toString() }
+
+  const session = driver.session()
+  session.run(query, params)
+  .then( ({records}) => {
+
+    if(!records.length) return reject({code: 403, message: `User ${user_id} not found`})
+    if(records.length > 1) return reject({code: 500, message: `Multiple users with ID ${user_id} found`})
+
+    const user = records[0].get('user')
+
+    console.log(`[Neo4J v2] User ${user_id} found in the DB`)
+
+    resolve(user)
+
+
+
+  })
+  .catch(error => { reject({code: 500, message:error}) })
+  .finally( () => session.close())
+
+}
 
 
 
@@ -112,7 +139,7 @@ exports.whoami = async (req, res) => {
     const token = await retrieve_jwt(req, res)
     const {user_id} = await verify_token(token)
     if(!user_id) throw {code: 400, message: `No user ID in token`}
-    const user = await find_user_in_db(user_id)
+    const user = await find_user_by_id(user_id)
 
     // Hide password_hashed from response
     delete user.properties.password_hashed
@@ -150,7 +177,7 @@ exports.get_user_from_jwt = async (req, res) => {
     const token = await retrieve_token_from_body_or_query(req)
     const {user_id} = await verify_token(token)
     if(!user_id) throw {code: 400, message: `No user ID in token`}
-    const user = await find_user_in_db(user_id)
+    const user = await find_user_by_id(user_id)
     // Hide password_hashed from response
     delete user.properties.password_hashed
     res.send(user)
