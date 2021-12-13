@@ -146,6 +146,7 @@ exports.retrieve_jwt = (req, res) => new Promise( (resolve, reject) => {
   // retrieve JWT from anywhere
 
   const jwt = req.headers.authorization?.split(" ")[1]
+    || req.headers.authorization
     || (new Cookies(req, res)).get('jwt')
     || (new Cookies(req, res)).get('token')
     || req.query.jwt

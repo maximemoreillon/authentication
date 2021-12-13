@@ -64,8 +64,7 @@ exports.whoami = async (req, res) => {
     console.log(`[Auth v2] user ${user_id} retrieved using token`)
 
   } catch (error) {
-    console.log(error.message || error)
-    res.status(error.code || 500).send(error.message || error)
+    error_handling(error, res)
   }
 
 }
@@ -81,8 +80,7 @@ exports.decode_token = async (req, res) => {
     console.log(`[Auth v2] Token with content ${decoded_token} decoded`)
 
   } catch (error) {
-    console.log(error.message || error)
-    res.status(error.code || 500).send(error.message || error)
+    error_handling(error, res)
   }
 
 }
@@ -100,8 +98,7 @@ exports.get_user_from_jwt = async (req, res) => {
     console.log(`[Auth v2] user ${user_id} retrieved using token`)
 
   } catch (error) {
-    console.log(error.message || error)
-    res.status(error.code || 500).send(error.message || error)
+    error_handling(error, res)
   }
 
 }

@@ -84,8 +84,7 @@ exports.whoami = (req, res) => {
     res.send(user)
   })
   .catch(error => {
-    console.log(`[Auth v1] ${error.message || error}`)
-    res.status(error.code || 500).send(error.message || error)
+    error_handling(error, res)
   })
 }
 
@@ -117,7 +116,6 @@ exports.get_user_from_jwt = (req, res) => {
     res.send(user)
   })
   .catch(error => {
-    console.log(`[Auth v1] ${error.message || error}`)
-    res.status(error.code || 500).send(error.message || error)
+    error_handling(error, res)
   })
 }
