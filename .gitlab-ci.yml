@@ -65,7 +65,7 @@ test:
       --env NEO4J_USERNAME=neo4j
       --env NEO4J_PASSWORD=neo4j
       --env JWT_SECRET=keyboardcat
-      moreillon/employee-manager
+      moreillon/user-manager
 
   script:
     - >
@@ -74,8 +74,8 @@ test:
       --name tdd-app
       --network tdd-network
       --env NEO4J_URL=bolt://tdd-db:7687
-      --env TEST_USER_USERNAME=administrator
-      --env TEST_USER_PASSWORD=administrator
+      --env TEST_USER_USERNAME=admin
+      --env TEST_USER_PASSWORD=admin
       ${CONTAINER_IMAGE_TEST}
       npm run coverage
     # If pass, then push the images
