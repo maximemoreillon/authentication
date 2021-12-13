@@ -1,6 +1,6 @@
 {
   "name": "authentication_microservice",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "description": "Authentication microservice",
   "main": "server.js",
   "scripts": {

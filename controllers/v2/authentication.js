@@ -45,7 +45,7 @@ const find_user_in_db = (identifier) => new Promise ( (resolve, reject) => {
 
   const session = driver.session()
   session
-  .run(query, parameters)
+  .run(query, params)
   .then( ({records}) => {
 
     if(!records.length) return reject({code: 403, message: `User ${identifier} not found`})
