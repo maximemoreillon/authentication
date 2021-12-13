@@ -90,7 +90,6 @@ exports.whoami = (req, res) => {
 }
 
 exports.decode_token = (req, res) => {
-
   retrieve_token_from_body_or_query(req)
   .then( token => {return verify_token(token)})
   .then(decoded_token => { res.send(decoded_token) })
@@ -98,7 +97,6 @@ exports.decode_token = (req, res) => {
     console.log(error.message || error)
     res.status(error.code || 500).send(error.message || error)
   })
-
 }
 
 exports.get_user_from_jwt = (req, res) => {
