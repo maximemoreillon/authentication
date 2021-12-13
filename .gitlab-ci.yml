@@ -28,8 +28,8 @@ build:
     - docker build -t ${CONTAINER_IMAGE_TEST} .
     - docker push ${CONTAINER_IMAGE_TEST}
 
-build:
-  stage: build
+test:
+  stage: test
   tags:
     - dind
 
