@@ -25,7 +25,7 @@ exports.generate_token = (user) => new Promise( (resolve, reject) => {
   if(!jwt_secret) return reject({code: 500, message: `Token secret not set`})
 
   // WARNING: no longer using identity
-  const user_id = user.properties._id
+  const user_id = user._id || user.properties._id
 
   if(!user_id) return reject({code: 500, message: `User does not have an ID`})
 

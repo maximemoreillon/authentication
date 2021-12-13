@@ -24,8 +24,8 @@ const register_last_login = (user_id) => {
     RETURN user
     `
   session.run(query, { user_id })
-  .then(() => { console.log(`[Auth] Successfully registered last login for user ${user_id}`) })
-  .catch((error) => { console.log(`[Auth] Error setting last login: ${error}`) })
+  .then(() => { console.log(`[Auth v1] Successfully registered last login for user ${user_id}`) })
+  .catch((error) => { console.log(`[Auth v1] Error setting last login: ${error}`) })
   .finally( () => { session.close() })
 
 }
@@ -38,7 +38,7 @@ const find_user_in_db = (identifier) => new Promise ( (resolve, reject) => {
     MATCH (user:User)
 
     // Allow user to identify using either userrname or email address
-    WHERE user.username=$identifier
+    WHERE user.username = $identifier
       OR user.email_address = $identifier
       OR user._id = $identifier // <= WARNING! No longer using identity
 
@@ -60,7 +60,7 @@ const find_user_in_db = (identifier) => new Promise ( (resolve, reject) => {
 
     resolve(user)
 
-    console.log(`[Neo4J] User ${identifier} found in the DB`)
+    console.log(`[Neo4J v1] User ${identifier} found in the DB`)
 
   })
   .catch(error => { reject({code: 500, message:error}) })
@@ -85,7 +85,7 @@ exports.login = async (req, res) => {
     if(!identifier) return res.status(400).send(`Missing username or e-mail address`)
     if(!password) return res.status(400).send(`Missing password`)
 
-    console.log(`[Auth] Login attempt from user identified as ${identifier}`)
+    console.log(`[Auth V1] Login attempt from user identified as ${identifier}`)
 
     const user = await find_user_in_db(identifier)
     const {password_hashed, _id} = user.properties
@@ -122,11 +122,11 @@ exports.whoami = (req, res) => {
   })
   .then( user => {
     delete user.properties.password_hashed
+    console.log(`[Auth v1] user ${user.properties._id} retrieved using token`)
     res.send(user)
-    console.log(`[Auth] user ${user_id} retrieved using token`)
   })
   .catch(error => {
-    console.log(`[Auth] ${error.message || error}`)
+    console.log(`[Auth v1] ${error.message || error}`)
     res.status(error.code || 500).send(error.message || error)
   })
 }
@@ -150,10 +150,8 @@ exports.get_user_from_jwt = (req, res) => {
   .then( token => {return verify_token(token)})
   .then( decoded_token => {
 
-    const user_id = decoded_token.user_id
+    const user_id = decoded_token.user_id.low || decoded_token.user_id
     if(!user_id) throw {code: 400, message: `No user ID in token`}
-
-    console.log(user_id)
 
     return find_user_in_db(user_id)
 
@@ -163,7 +161,7 @@ exports.get_user_from_jwt = (req, res) => {
     res.send(user)
   })
   .catch(error => {
-    console.log(`[Auth] ${error.message || error}`)
+    console.log(`[Auth v1] ${error.message || error}`)
     res.status(error.code || 500).send(error.message || error)
   })
 }

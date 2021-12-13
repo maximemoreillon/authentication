@@ -33,7 +33,7 @@ const find_user_in_db = (identifier) => new Promise ( (resolve, reject) => {
 
     // Allow user to identify using either userrname or email address
     WHERE user.username = $identifier
-      OR user.email_address  =$identifier
+      OR user.email_address  = $identifier
       OR user._id = $identifier // <= No longer using identity
 
     // Return user if found
@@ -85,7 +85,7 @@ exports.login = async (req, res) => {
     if(!identifier) return res.status(400).send(`Missing username or e-mail address`)
     if(!password) return res.status(400).send(`Missing password`)
 
-    console.log(`[Auth] Login attempt from user identified as ${identifier}`)
+    console.log(`[Auth v2] Login attempt from user identified as ${identifier}`)
 
     const user = await find_user_in_db(identifier)
 
@@ -117,7 +117,7 @@ exports.whoami = async (req, res) => {
     delete user.properties.password_hashed
 
     res.send(user)
-    console.log(`[Auth] user ${user_id} retrieved using token`)
+    console.log(`[Auth v2] user ${user_id} retrieved using token`)
 
   } catch (error) {
     console.log(error.message || error)
@@ -134,7 +134,7 @@ exports.decode_token = async (req, res) => {
     const token = await retrieve_token_from_body_or_query(req)
     const decoded_token = await verify_token(token)
     res.send(decoded_token)
-    console.log(`[Auth] Token with content ${decoded_token} decoded`)
+    console.log(`[Auth v2] Token with content ${decoded_token} decoded`)
 
   } catch (error) {
     console.log(error.message || error)
@@ -153,7 +153,7 @@ exports.get_user_from_jwt = async (req, res) => {
     // Hide password_hashed from response
     delete user.properties.password_hashed
     res.send(user)
-    console.log(`[Auth] user ${user_id} retrieved using token`)
+    console.log(`[Auth v2] user ${user_id} retrieved using token`)
 
   } catch (error) {
     console.log(error.message || error)

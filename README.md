@@ -7,6 +7,8 @@
 Authentication microservice that delivers a JWT upon receiving correct credentials.
 Here, users are stored in a Neo4J database.
 
+NOTE: Authentication is now part of user-manager
+
 ## Routes
 
 | Route | Method | Body/query | Description |
