@@ -40,7 +40,8 @@ const find_user_in_db = (identifier) => new Promise ( (resolve, reject) => {
     RETURN user
     `
 
-  const parameters = {identifier}
+  // IMPORTANT: Forcing string
+  const params = {identifier: identifier.toString()}
 
   const session = driver.session()
   session

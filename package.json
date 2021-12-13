@@ -1,11 +1,9 @@
 {
   "name": "authentication_microservice",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Authentication microservice",
   "main": "server.js",
   "scripts": {
-    "start": "PORT=80 node server.js",
-    "dev": "PORT=7654 nodemon server.js",
     "test": "mocha --timeout 10000 --exit",
     "coverage": "nyc mocha --timeout 15000 --exit"
   },
