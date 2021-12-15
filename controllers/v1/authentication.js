@@ -93,8 +93,7 @@ exports.decode_token = (req, res) => {
   .then( token => {return verify_token(token)})
   .then(decoded_token => { res.send(decoded_token) })
   .catch(error => {
-    console.log(error.message || error)
-    res.status(error.code || 500).send(error.message || error)
+    error_handling(error, res)
   })
 }
 

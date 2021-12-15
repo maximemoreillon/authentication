@@ -13,9 +13,9 @@ NOTE: Authentication is now part of user-manager
 
 | Route | Method | Body/query | Description |
 | --- | --- | --- | --- |
-| /login | POST | password and username or email_address | Allows users to login, responds with a JWT |
-| /whoami | GET/POST | - | Returns the user corresponding the the JWT provided in the authorization header |
-| /user_from_jwt | GET | jwt | Returns the user corresponding the the JWT provided in the query |
+| /v3/login | POST | password and username or email_address | Allows users to login, responds with a JWT |
+| /v3/whoami | GET/POST | - | Returns the user corresponding the the JWT provided in the authorization header |
+| /v3/user_from_jwt | GET | jwt | Returns the user corresponding the the JWT provided in the query |
 
 
 ## Environment variables

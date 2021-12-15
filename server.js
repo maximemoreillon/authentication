@@ -5,6 +5,7 @@ const dotenv = require('dotenv')
 const apiMetrics = require('prometheus-api-metrics')
 const v1_router = require('./routes/v1/auth.js')
 const v2_router = require('./routes/v2/auth.js')
+const v3_router = require('./routes/v3/auth.js')
 const { version, author } = require('./package.json')
 const {
   url: neo4j_url,
@@ -47,6 +48,7 @@ app.get('/', (req, res) => {
 app.use('/', v1_router)
 app.use('/v1', v1_router)
 app.use('/v2', v2_router)
+app.use('/v3', v3_router)
 
 // Start server
 app.listen(app_port, () => {
