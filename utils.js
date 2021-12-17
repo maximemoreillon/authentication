@@ -13,6 +13,14 @@ exports.error_handling = (error, res) => {
 }
 
 
+const get_id_of_user = (user) => {
+  return user._id
+    ?? user.properties._id
+    ?? user.identity.low
+    ?? user.identity
+}
+
+
 exports.register_last_login = ({driver, user_id}) => {
 
   const query = `
@@ -20,7 +28,9 @@ exports.register_last_login = ({driver, user_id}) => {
     SET user.last_login = date()
     RETURN user
     `
-  const parameters = { user_id }
+    
+  const params = {user_id: user_id.toString() }
+
   const session = driver.session()
 
   return session.run( query, parameters )
@@ -106,8 +116,8 @@ exports.generate_token = (user) => new Promise( (resolve, reject) => {
   // Check if the secret is set
   if(!jwt_secret) return reject({code: 500, message: `Token secret not set`})
 
-  // WARNING: no longer using identity
-  const user_id = user._id || user.properties._id
+  // forcing string
+  const user_id = get_id_of_user(user).toString()
 
   if(!user_id) return reject({code: 500, message: `User does not have an ID`})
 
