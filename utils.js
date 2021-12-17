@@ -28,12 +28,12 @@ exports.register_last_login = ({driver, user_id}) => {
     SET user.last_login = date()
     RETURN user
     `
-    
+
   const params = {user_id: user_id.toString() }
 
   const session = driver.session()
 
-  return session.run( query, parameters )
+  return session.run( query, params )
 
 
 }
