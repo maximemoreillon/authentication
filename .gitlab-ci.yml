@@ -1,7 +1,7 @@
 stages:
   - build
   - test
-  - deploy
+  # - deploy
 
 variables:
   APPLICATION_NAME: authentication
@@ -86,16 +86,15 @@ test:
     - docker push ${CONTAINER_IMAGE_TAGGED}
     - docker push ${CONTAINER_IMAGE_LATEST}
 
-deploy:
-  stage: deploy
-  tags:
-    - moreillon
-  only:
-    - master
-  script:
-    - envsubst < kubernetes_manifest.yml | kubectl apply -f -
-    - kubectl rollout restart deployment/${APPLICATION_NAME}
-  environment:
-    name: production
-    kubernetes:
-      namespace: ${KUBERNETES_NAMESPACE}
+# deploy:
+#   stage: deploy
+#   tags:
+#     - moreillon
+#   only:
+#     - master
+#   script:
+#     - envsubst < kubernetes_manifest.yml | kubectl apply -f -
+#   environment:
+#     name: production
+#     kubernetes:
+#       namespace: ${KUBERNETES_NAMESPACE}
