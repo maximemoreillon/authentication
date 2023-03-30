@@ -21,8 +21,7 @@ const {
 dotenv.config()
 
 exports.login = async (req, res) => {
-  const { hostname } = req
-  console.log(`[/v1/login] hostname: ${hostname}`)
+  console.log(req.headers.host)
 
   try {
     const identifier =
@@ -62,8 +61,7 @@ exports.login = async (req, res) => {
 exports.whoami = (req, res) => {
   // Retrieves user information based on JWT present in auth header
 
-  const { hostname } = req
-  console.log(`[/v1/whoami] hostname: ${hostname}`)
+  console.log(req.headers.host)
 
   retrieve_jwt(req)
     .then((token) => {
@@ -100,8 +98,7 @@ exports.decode_token = (req, res) => {
 }
 
 exports.get_user_from_jwt = (req, res) => {
-  const { hostname } = req
-  console.log(`[/v1/user_from_jwt] hostname: ${hostname}`)
+  console.log(req.headers.host)
 
   // wrongly used in router
   retrieve_token_from_body_or_query(req)
