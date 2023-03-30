@@ -21,8 +21,8 @@ const {
 dotenv.config()
 
 exports.login = async (req, res) => {
-  const referrer = req.get("Referrer")
-  console.log(`[/v1/login] referrer: ${referrer}`)
+  const { hostname } = req
+  console.log(`[/v1/login] hostname: ${hostname}`)
 
   try {
     const identifier =
@@ -62,8 +62,8 @@ exports.login = async (req, res) => {
 exports.whoami = (req, res) => {
   // Retrieves user information based on JWT present in auth header
 
-  const referrer = req.get("Referrer")
-  console.log(`[/v1/whoami] referrer: ${referrer}`)
+  const { hostname } = req
+  console.log(`[/v1/whoami] hostname: ${hostname}`)
 
   retrieve_jwt(req)
     .then((token) => {
@@ -100,8 +100,8 @@ exports.decode_token = (req, res) => {
 }
 
 exports.get_user_from_jwt = (req, res) => {
-  const referrer = req.get("Referrer")
-  console.log(`[/v1/user_from_jwt] referrer: ${referrer}`)
+  const { hostname } = req
+  console.log(`[/v1/user_from_jwt] hostname: ${hostname}`)
 
   // wrongly used in router
   retrieve_token_from_body_or_query(req)

@@ -16,8 +16,8 @@ const {
 } = require("../../utils.js")
 
 exports.login = async (req, res) => {
-  const referrer = req.get("Referrer")
-  console.log(`[/v3/login] referrer: ${referrer}`)
+  const { hostname } = req
+  console.log(`[/v2/login] hostname: ${hostname}`)
 
   try {
     const identifier =
@@ -56,8 +56,8 @@ exports.login = async (req, res) => {
 exports.whoami = async (req, res) => {
   // Retrieves user information based on JWT present in auth header
 
-  const referrer = req.get("Referrer")
-  console.log(`[/v2/whoami] referrer: ${referrer}`)
+  const { hostname } = req
+  console.log(`[/v2/whoami] hostname: ${hostname}`)
 
   try {
     const token = await retrieve_jwt(req, res)
@@ -89,8 +89,8 @@ exports.decode_token = async (req, res) => {
 }
 
 exports.get_user_from_jwt = async (req, res) => {
-  const referrer = req.get("Referrer")
-  console.log(`[/v2/user_from_jwt] referrer: ${referrer}`)
+  const { hostname } = req
+  console.log(`[/v2/user_from_jwt] hostname: ${hostname}`)
 
   try {
     const token = await retrieve_token_from_body_or_query(req)
