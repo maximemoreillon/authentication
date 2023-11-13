@@ -2,7 +2,7 @@
 const express = require("express")
 const cors = require("cors")
 const dotenv = require("dotenv")
-const apiMetrics = require("prometheus-api-metrics")
+const promBundle = require("express-prom-bundle")
 const v1_router = require("./routes/v1/auth.js")
 const v2_router = require("./routes/v2/auth.js")
 const v3_router = require("./routes/v3/auth.js")
@@ -18,6 +18,8 @@ dotenv.config()
 
 console.log(`Authentication microservice v${version}`)
 
+const promOptions = { includeMethod: true, includePath: true }
+
 db_connection_check()
 
 // Instanciate an express server
@@ -26,7 +28,7 @@ const app = express()
 // Expressing settings
 app.use(express.json())
 app.use(cors())
-app.use(apiMetrics())
+app.use(promBundle(promOptions))
 
 // Express routes
 app.get("/", (req, res) => {
